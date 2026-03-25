@@ -421,6 +421,8 @@ class TestProviderApiKeyEnv:
         assert PROVIDER_API_KEY_ENV["mistralai"] == "MISTRAL_API_KEY"
         assert PROVIDER_API_KEY_ENV["nvidia"] == "NVIDIA_API_KEY"
         assert PROVIDER_API_KEY_ENV["openai"] == "OPENAI_API_KEY"
+        assert PROVIDER_API_KEY_ENV["opencode-go"] == "OPENCODE_API_KEY"
+        assert PROVIDER_API_KEY_ENV["opencode-zen"] == "OPENCODE_API_KEY"
         assert PROVIDER_API_KEY_ENV["openrouter"] == "OPENROUTER_API_KEY"
         assert PROVIDER_API_KEY_ENV["perplexity"] == "PPLX_API_KEY"
         assert PROVIDER_API_KEY_ENV["together"] == "TOGETHER_API_KEY"
@@ -846,7 +848,7 @@ class TestModelPersistenceBetweenSessions:
             patch.object(model_config, "DEFAULT_CONFIG_PATH", config_path),
             patch.dict(
                 "os.environ",
-                {"ANTHROPIC_API_KEY": "test-key"},
+                {"ANTHROPIC_API_KEY": "test-key", "OPENCODE_API_KEY": ""},
                 clear=False,
             ),
         ):

@@ -198,6 +198,8 @@ PROVIDER_API_KEY_ENV: dict[str, str] = {
     "mistralai": "MISTRAL_API_KEY",
     "nvidia": "NVIDIA_API_KEY",
     "openai": "OPENAI_API_KEY",
+    "opencode-go": "OPENCODE_API_KEY",
+    "opencode-zen": "OPENCODE_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
     "perplexity": "PPLX_API_KEY",
     "together": "TOGETHER_API_KEY",

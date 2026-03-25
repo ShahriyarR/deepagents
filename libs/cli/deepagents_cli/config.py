@@ -762,6 +762,9 @@ class Settings:
     nvidia_api_key: str | None
     """NVIDIA API key if available."""
 
+    opencode_api_key: str | None
+    """OpenCode API key if available."""
+
     tavily_api_key: str | None
     """Tavily API key if available."""
 
@@ -818,6 +821,7 @@ class Settings:
         google_key = os.environ.get("GOOGLE_API_KEY") or None
         nvidia_key = os.environ.get("NVIDIA_API_KEY") or None
         tavily_key = os.environ.get("TAVILY_API_KEY") or None
+        opencode_key = os.environ.get("OPENCODE_API_KEY") or None
         google_cloud_project = os.environ.get("GOOGLE_CLOUD_PROJECT")
 
         # Detect LangSmith configuration
@@ -855,6 +859,7 @@ class Settings:
             anthropic_api_key=anthropic_key,
             google_api_key=google_key,
             nvidia_api_key=nvidia_key,
+            opencode_api_key=opencode_key,
             tavily_api_key=tavily_key,
             google_cloud_project=google_cloud_project,
             deepagents_langchain_project=deepagents_langchain_project,
@@ -941,6 +946,7 @@ class Settings:
             "anthropic_api_key": os.environ.get("ANTHROPIC_API_KEY") or None,
             "google_api_key": os.environ.get("GOOGLE_API_KEY") or None,
             "nvidia_api_key": os.environ.get("NVIDIA_API_KEY") or None,
+            "opencode_api_key": os.environ.get("OPENCODE_API_KEY") or None,
             "tavily_api_key": os.environ.get("TAVILY_API_KEY") or None,
             "google_cloud_project": os.environ.get("GOOGLE_CLOUD_PROJECT"),
             "deepagents_langchain_project": os.environ.get(
@@ -1004,6 +1010,11 @@ class Settings:
     def has_nvidia(self) -> bool:
         """Check if NVIDIA API key is configured."""
         return self.nvidia_api_key is not None
+
+    @property
+    def has_opencode(self) -> bool:
+        """Check if OpenCode API key is configured."""
+        return self.opencode_api_key is not None
 
     @property
     def has_vertex_ai(self) -> bool:
@@ -1677,9 +1688,10 @@ def _get_default_model_spec() -> str:
 
     Checks in order:
 
-    1. `[models].default` in config file (user's intentional preference).
-    2. `[models].recent` in config file (last `/model` switch).
-    3. Auto-detection based on available API credentials.
+    1. If OpenCode API key is set, skip saved defaults and auto-detect.
+    2. `[models].default` in config file (user's intentional preference).
+    3. `[models].recent` in config file (last `/model` switch).
+    4. Auto-detection based on available API credentials.
 
     Returns:
         Model specification in provider:model format.
@@ -1690,13 +1702,20 @@ def _get_default_model_spec() -> str:
     from deepagents_cli.model_config import ModelConfig, ModelConfigError
 
     config = ModelConfig.load()
-    if config.default_model:
-        return config.default_model
+    s = _get_settings()
 
-    if config.recent_model:
+    # If OpenCode API key is set, skip saved defaults and auto-detect
+    if s.has_opencode:
+        # User has OpenCode key - use auto-detection
+        pass
+    elif config.default_model:
+        return config.default_model
+    elif config.recent_model:
         return config.recent_model
 
-    s = _get_settings()
+    # Auto-detection based on available API credentials
+    if s.has_opencode:
+        return "opencode-zen:kimi-k2.5"
     if s.has_openai:
         return "openai:gpt-5.2"
     if s.has_anthropic:
@@ -1711,7 +1730,7 @@ def _get_default_model_spec() -> str:
     msg = (
         "No credentials configured. Please set one of: "
         "ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY, "
-        "GOOGLE_CLOUD_PROJECT, or NVIDIA_API_KEY"
+        "GOOGLE_CLOUD_PROJECT, NVIDIA_API_KEY, or OPENCODE_API_KEY"
     )
     raise ModelConfigError(msg)
 
@@ -2079,10 +2098,16 @@ def create_model(
     config = ModelConfig.load()
     class_path = config.get_class_path(provider) if provider else None
 
+    # For config-defined providers with base_url, use "openai" as the langchain
+    # provider since they're OpenAI-compatible endpoints
+    langchain_provider = provider
+    if not class_path and provider and config.get_base_url(provider):
+        langchain_provider = "openai"
+
     if class_path:
         model = _create_model_from_class(class_path, model_name, provider, kwargs)
     else:
-        model = _create_model_via_init(model_name, provider, kwargs)
+        model = _create_model_via_init(model_name, langchain_provider, kwargs)
 
     resolved_provider = provider or getattr(model, "_model_provider", provider)
 
