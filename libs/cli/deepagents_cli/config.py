@@ -1688,10 +1688,9 @@ def _get_default_model_spec() -> str:
 
     Checks in order:
 
-    1. If OpenCode API key is set, skip saved defaults and auto-detect.
-    2. `[models].default` in config file (user's intentional preference).
-    3. `[models].recent` in config file (last `/model` switch).
-    4. Auto-detection based on available API credentials.
+    1. `[models].default` in config file (user's intentional preference).
+    2. `[models].recent` in config file (last `/model` switch).
+    3. Auto-detection based on available API credentials (prefers OpenCode if set).
 
     Returns:
         Model specification in provider:model format.
@@ -1704,16 +1703,14 @@ def _get_default_model_spec() -> str:
     config = ModelConfig.load()
     s = _get_settings()
 
-    # If OpenCode API key is set, skip saved defaults and auto-detect
-    if s.has_opencode:
-        # User has OpenCode key - use auto-detection
-        pass
-    elif config.default_model:
+    # User's saved preferences take priority
+    if config.default_model:
         return config.default_model
-    elif config.recent_model:
+    if config.recent_model:
         return config.recent_model
 
     # Auto-detection based on available API credentials
+    # OpenCode takes priority when available
     if s.has_opencode:
         return "opencode-zen:kimi-k2.5"
     if s.has_openai:
