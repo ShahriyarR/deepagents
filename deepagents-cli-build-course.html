@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build the Deep Agents CLI — From Scratch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-bg: #FAF7F2;
+  --color-bg-warm: #F5F0E8;
+  --color-bg-code: #1E1E2E;
+  --color-text: #2C2A28;
+  --color-text-secondary: #6B6560;
+  --color-text-muted: #9E9790;
+  --color-border: #E5DFD6;
+  --color-border-light: #EEEBE5;
+  --color-surface: #FFFFFF;
+  --color-surface-warm: #FDF9F3;
+  --color-accent: #D94F30;
+  --color-accent-hover: #C4432A;
+  --color-accent-light: #FDEEE9;
+  --color-accent-muted: #E8836C;
+  --color-success: #2D8B55;
+  --color-success-light: #E8F5EE;
+  --color-error: #C93B3B;
+  --color-error-light: #FDE8E8;
+  --color-info: #2A7B9B;
+  --color-info-light: #E4F2F7;
+  --color-actor-1: #D94F30;
+  --color-actor-2: #2A7B9B;
+  --color-actor-3: #7B6DAA;
+  --color-actor-4: #D4A843;
+  --color-actor-5: #2D8B55;
+  --font-display: 'Bricolage Grotesque', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+  --leading-loose: 1.8;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --content-width: 800px;
+  --content-width-wide: 1000px;
+  --nav-height: 50px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(44,42,40,0.05);
+  --shadow-md: 0 4px 12px rgba(44,42,40,0.08);
+  --shadow-lg: 0 8px 24px rgba(44,42,40,0.1);
+  --shadow-xl: 0 16px 48px rgba(44,42,40,0.12);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --stagger-delay: 120ms;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-snap-type: y proximity; scroll-behavior: smooth; font-size: 16px; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--leading-normal);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+::selection { background: var(--color-accent-light); color: var(--color-accent); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 2px; }
+
+/* NAV */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  z-index: 100;
+  background: rgba(250, 247, 242, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  gap: var(--space-6);
+}
+.nav-title {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nav-dots {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-left: auto;
+}
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  border: none;
+  padding: 0;
+}
+.nav-dot.active { background: var(--color-accent); transform: scale(1.3); }
+.nav-dot:hover:not(.active) { background: var(--color-text-muted); }
+.nav-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transition: width var(--duration-normal) var(--ease-out);
+  width: 0%;
+}
+
+/* MODULES */
+.module {
+  min-height: 100dvh;
+  scroll-snap-align: start;
+  padding: calc(var(--nav-height) + var(--space-12)) var(--space-8) var(--space-16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.module--warm { background: var(--color-bg-warm); }
+.module__inner { width: 100%; max-width: var(--content-width-wide); }
+.module__header { margin-bottom: var(--space-12); }
+.module__number {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+.module__title {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+.module__subtitle {
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  max-width: 600px;
+}
+
+/* SCREENS */
+.screen {
+  padding: var(--space-16) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.screen:last-child { border-bottom: none; }
+.screen__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-4);
+}
+.screen__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+  line-height: var(--leading-snug);
+}
+
+/* ANIMATE IN */
+.animate-in {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+              transform var(--duration-slow) var(--ease-out);
+}
+.animate-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* GRID LAYOUTS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+
+/* TEXT */
+.text-lead { font-size: var(--text-xl); line-height: var(--leading-loose); color: var(--color-text-secondary); }
+.text-sm { font-size: var(--text-sm); }
+.text-muted { color: var(--color-text-muted); }
+.text-accent { color: var(--color-accent); }
+.text-center { text-align: center; }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+.mt-8 { margin-top: var(--space-8); }
+.mt-12 { margin-top: var(--space-12); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+.mb-8 { margin-bottom: var(--space-8); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+/* TRANSLATION BLOCKS */
+.translation-block {
+  background: var(--color-bg-code);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin: var(--space-6) 0;
+}
+.translation-block__header {
+  padding: var(--space-3) var(--space-5);
+  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.translation-block__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.translation-block__code {
+  padding: var(--space-5);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  overflow-x: auto;
+}
+.translation-block__english {
+  padding: var(--space-5);
+  background: rgba(255,255,255,0.03);
+}
+.code-pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: #CDD6F4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.7;
+}
+.code-line { display: flex; gap: var(--space-4); }
+.code-line__num {
+  color: rgba(255,255,255,0.2);
+  user-select: none;
+  min-width: 1.5em;
+  text-align: right;
+  flex-shrink: 0;
+}
+.english-line {
+  color: rgba(255,255,255,0.75);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  padding: var(--space-1) 0;
+}
+
+/* CALLOUT */
+.callout {
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  margin: var(--space-6) 0;
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+.callout--accent { background: var(--color-accent-light); border-left: 4px solid var(--color-accent); }
+.callout--info { background: var(--color-info-light); border-left: 4px solid var(--color-info); }
+.callout--success { background: var(--color-success-light); border-left: 4px solid var(--color-success); }
+.callout__icon { font-size: var(--text-xl); flex-shrink: 0; line-height: 1.4; }
+.callout__content { font-size: var(--text-sm); line-height: var(--leading-loose); }
+.callout__title {
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-base);
+}
+
+/* STEP CARDS */
+.step-cards { display: flex; flex-direction: column; gap: var(--space-4); margin: var(--space-6) 0; }
+.step-card {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.step-card__num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-card__title { font-weight: 600; margin-bottom: var(--space-1); }
+.step-card__desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+/* GROUP CHAT */
+.group-chat {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin: var(--space-6) 0;
+  box-shadow: var(--shadow-md);
+}
+.group-chat__header {
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-warm);
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+.group-chat__body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+.chat-bubble {
+  max-width: 75%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  animation: bubbleIn 0.3s var(--ease-out);
+}
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.chat-bubble--left { align-self: flex-start; background: var(--color-bg-warm); border: 1px solid var(--color-border); }
+.chat-bubble--right { align-self: flex-end; background: var(--color-accent-light); border: 1px solid var(--color-accent-muted); }
+.chat-bubble--center { align-self: center; background: var(--color-info-light); border: 1px solid var(--color-info); font-size: var(--text-xs); color: var(--color-info); }
+.chat-bubble__sender { font-weight: 700; font-size: var(--text-xs); margin-bottom: var(--space-1); opacity: 0.7; }
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+}
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: typing 1.2s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* DATA FLOW */
+.data-flow {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  margin: var(--space-6) 0;
+  overflow-x: auto;
+}
+.data-flow__track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: max-content;
+}
+.flow-actor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 100px;
+}
+.flow-actor__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xl);
+  box-shadow: var(--shadow-md);
+}
+.flow-actor__name { font-size: var(--text-xs); font-weight: 600; text-align: center; }
+.flow-arrow {
+  flex: 1;
+  min-width: 60px;
+  height: 2px;
+  background: var(--color-border);
+  position: relative;
+  margin: 0 var(--space-2);
+}
+.flow-arrow::after {
+  content: '→';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}
+.flow-packet {
+  background: var(--color-accent);
+  color: white;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  animation: packetMove 1.5s ease-in-out infinite;
+}
+@keyframes packetMove {
+  0% { opacity: 0; transform: translateX(-20px); }
+  20% { opacity: 1; transform: translateX(0); }
+  80% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(20px); }
+}
+
+/* PATTERN CARDS */
+.pattern-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-5); margin: var(--space-6) 0; }
+.pattern-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
+}
+.pattern-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.pattern-card__icon { font-size: 2rem; margin-bottom: var(--space-3); }
+.pattern-card__title { font-family: var(--font-display); font-weight: 700; margin-bottom: var(--space-2); }
+.pattern-card__desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+/* BADGE */
+.badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.badge--accent { background: var(--color-accent-light); color: var(--color-accent); }
+.badge--info { background: var(--color-info-light); color: var(--color-info); }
+.badge--success { background: var(--color-success-light); color: var(--color-success); }
+
+/* QUIZ */
+.quiz {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  margin: var(--space-8) 0;
+  box-shadow: var(--shadow-sm);
+}
+.quiz__question {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+  line-height: var(--leading-snug);
+}
+.quiz__options { display: flex; flex-direction: column; gap: var(--space-3); }
+.quiz__option {
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--text-base);
+  transition: all var(--duration-fast) var(--ease-out);
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font-body);
+}
+.quiz__option:hover { border-color: var(--color-accent); background: var(--color-accent-light); }
+.quiz__option.correct { border-color: var(--color-success); background: var(--color-success-light); }
+.quiz__option.incorrect { border-color: var(--color-error); background: var(--color-error-light); }
+.quiz__option.disabled { pointer-events: none; opacity: 0.6; }
+.quiz__feedback {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-loose);
+  display: none;
+}
+.quiz__feedback.show { display: block; }
+.quiz__feedback--correct { background: var(--color-success-light); color: var(--color-success); }
+.quiz__feedback--incorrect { background: var(--color-error-light); color: var(--color-error); }
+
+/* TOOLTIP */
+.term {
+  border-bottom: 1.5px dashed var(--color-text-muted);
+  cursor: pointer;
+  position: relative;
+  display: inline;
+}
+.tooltip {
+  position: fixed;
+  background: var(--color-text);
+  color: white;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: var(--leading-loose);
+  max-width: 280px;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  display: none;
+}
+.tooltip.show { display: block; }
+.tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 16px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-text);
+  transform: rotate(45deg);
+}
+
+/* ICON ROWS */
+.icon-row {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin: var(--space-6) 0;
+}
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  min-width: 100px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.icon-item__emoji { font-size: var(--text-2xl); }
+.icon-item__label { font-size: var(--text-xs); color: var(--color-text-secondary); font-weight: 500; }
+
+/* FILE TREE */
+.file-tree {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  background: var(--color-bg-code);
+  color: #CDD6F4;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  margin: var(--space-6) 0;
+  overflow-x: auto;
+}
+.file-tree__line { display: flex; gap: var(--space-3); line-height: 1.8; }
+.file-tree__indent { color: rgba(255,255,255,0.2); user-select: none; }
+.file-tree__name { color: #89B4FA; }
+.file-tree__dir { color: #F9E2AF; }
+
+/* STREAMING ANIMATION */
+.streaming-demo {
+  background: var(--color-bg-code);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin: var(--space-6) 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: #CDD6F4;
+}
+.streaming-token {
+  display: inline;
+  opacity: 0;
+  animation: tokenReveal 0.3s ease-out forwards;
+}
+@keyframes tokenReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .module { padding: calc(var(--nav-height) + var(--space-8)) var(--space-5) var(--space-12); }
+  .module__title { font-size: var(--text-3xl); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .translation-block__grid { grid-template-columns: 1fr; }
+  .translation-block__code { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .pattern-cards { grid-template-columns: 1fr 1fr; }
+  .chat-bubble { max-width: 90%; }
+}
+@media (max-width: 480px) {
+  .module__title { font-size: var(--text-2xl); }
+  .nav-title { display: none; }
+  .pattern-cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-title">Build the Deep Agents CLI — From Scratch</span>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="nav-progress" id="navProgress"></div>
+</nav>
+
+
+<!-- MODULE 1: Project Setup -->
+<section class="module" id="module-1">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 1</div>
+      <h1 class="module__title">Project Setup</h1>
+      <p class="module__subtitle">Create the package scaffold, install dependencies, and build the CLI entry point.</p>
+    </div>
+
+    <!-- Screen 1: What We're Building -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">What we're building</h2>
+      <p class="text-lead mb-6">By module 8, you'll have a fully functional AI CLI with streaming responses, tool calling, HITL approval, conversation history, skills, and slash commands.</p>
+      
+      <div class="file-tree">
+        <div class="file-tree__line"><span class="file-tree__indent">│</span><span class="file-tree__dir">deepagents_cli/</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">├──</span><span class="file-tree__name">main.py</span> — entry point with subcommands</div>
+        <div class="file-tree__line"><span class="file-tree__indent">├──</span><span class="file-tree__name">agent.py</span> — LangGraph agent builder</div>
+        <div class="file-tree__line"><span class="file-tree__indent">├──</span><span class="file-tree__name">config.py</span> — settings & glyphs</div>
+        <div class="file-tree__line"><span class="file-tree__indent">├──</span><span class="file-tree__name">app.py</span> — Textual TUI</div>
+        <div class="file-tree__line"><span class="file-tree__indent">├──</span><span class="file-tree__name">command_registry.py</span> — slash commands</div>
+        <div class="file-tree__line"><span class="file-tree__indent">└──</span><span class="file-tree__dir">skills/</span> — skills middleware</div>
+      </div>
+
+      <div class="icon-row">
+        <div class="icon-item">
+          <span class="icon-item__emoji">🐍</span>
+          <span class="icon-item__label">Python 3.11+</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🎨</span>
+          <span class="icon-item__label">Textual TUI</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🔗</span>
+          <span class="icon-item__label">LangChain + LangGraph</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🤖</span>
+          <span class="icon-item__label">Anthropic Claude</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Initialize Project -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Initialize the project</h2>
+      <p class="text-lead mb-6">Start by creating the package structure with <span class="term" data-tip="uv is a fast Python package resolver and installer, written in Rust. It replaces pip and poetry.">uv</span>.</p>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">Create the package</div>
+            <div class="step-card__desc">Run <code>uv init --package deepagents-cli</code> to scaffold the project.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Define dependencies</div>
+            <div class="step-card__desc">Edit <code>pyproject.toml</code> to declare required packages.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Install packages</div>
+            <div class="step-card__desc">Run <code>uv sync</code> to install all dependencies.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">💡</span>
+        <div class="callout__content">
+          <div class="callout__title">Why uv?</div>
+          uv is 10-100x faster than pip and handles dependency resolution intelligently. It also manages virtual environments automatically.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Install Dependencies -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Install dependencies</h2>
+      <p class="text-lead mb-6">Add these packages to your <code>pyproject.toml</code>.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">pyproject.toml dependencies</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>[project]</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>name = "deepagents-cli"</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>dependencies = [</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>  "textual>=0.50",</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>  "langchain-anthropic>=0.1",</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>  "langgraph>=0.0.55",</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>  "anthropic>=0.20",</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>  "python-dotenv>=1.0",</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>]</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 4</strong> — <strong>Textual</strong>: Terminal UI framework for the interactive interface.</div>
+            <div class="english-line"><strong>Line 5</strong> — <strong>LangChain Anthropic</strong>: Integrates Claude models with LangChain.</div>
+            <div class="english-line"><strong>Line 6</strong> — <strong>LangGraph</strong>: Builds the agent graph with tools and memory.</div>
+            <div class="english-line"><strong>Line 7</strong> — <strong>Anthropic</strong>: Low-level Claude API client.</div>
+            <div class="english-line"><strong>Line 8</strong> — <strong>python-dotenv</strong>: Loads <code>.env</code> files for API keys.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Build Entry Point -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Build the entry point</h2>
+      <p class="text-lead mb-6">The <code>main.py</code> is the first code that runs. It decides whether to launch the interactive app or handle a <span class="term" data-tip="A subcommand is a second-level command that does something specific, like 'deepagents list' or 'deepagents reset'.">subcommand</span>.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">deepagents_cli/main.py — entry point</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>def cli_main() -> int:</span></span>
+          </div>
+<span class="code-line"><span class="code-line__num">2</span><span>    args = parse_args()</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    if args.command == "run":</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>        run_app(args)  # TUI</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    elif args.command == "list":</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>        list_agents(args)</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    elif args.command == "reset":</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>        reset_agent(args)</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>    return 0</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — <code>cli_main()</code> is the main entry point. Returns an exit code.</div>
+            <div class="english-line"><strong>Line 2</strong> — <code>parse_args()</code> reads CLI flags like <code>--agent</code>, <code>-r</code>.</div>
+            <div class="english-line"><strong>Line 3-4</strong> — <code>deepagents</code> (no subcommand) launches the interactive app.</div>
+            <div class="english-line"><strong>Line 5-6</strong> — <code>deepagents list</code> prints available agents.</div>
+            <div class="english-line"><strong>Line 7-8</strong> — <code>deepagents reset</code> resets an agent's state.</div>
+            <div class="english-line"><strong>Line 9</strong> — Return 0 means success; non-zero means error.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>🔄</span>
+          <span>Actor communication — "user runs deepagents list"</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">Terminal</div>
+            Runs <code>deepagents list</code>
+          </div>
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">main.py</div>
+            <code>parse_args()</code> sees <code>command="list"</code>
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">agent.py</div>
+            <code>list_agents()</code> reads <code>~/.deepagents/</code>
+          </div>
+          <div class="chat-bubble chat-bubble--center">No AI involved — pure file I/O.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-1">
+        <div class="quiz__question">You want to add a <code>--debug</code> flag. Which file do you modify?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">agent.py — that's where the agent logic lives</button>
+          <button class="quiz__option" data-answer="b">config.py — that's where settings are stored</button>
+          <button class="quiz__option" data-answer="c" data-correct="true">main.py — that's where arguments are parsed</button>
+          <button class="quiz__option" data-answer="d">app.py — that's where the UI is rendered</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="c">Right! <code>main.py</code> contains <code>parse_args()</code> which defines all CLI flags. Adding a new flag means modifying that function.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">Not quite — agent.py builds the agent but doesn't handle CLI argument parsing. That's in main.py.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b">config.py handles runtime settings, not CLI argument parsing. Arguments are parsed in main.py's <code>parse_args()</code>.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">app.py handles the UI, not argument parsing. CLI flags go in main.py's <code>parse_args()</code>.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 2: Your First Chat Loop -->
+<section class="module module--warm" id="module-2">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 2</div>
+      <h1 class="module__title">Your First Chat Loop</h1>
+      <p class="module__subtitle">Connect to a chat model and stream responses in the terminal.</p>
+    </div>
+
+    <!-- Screen 1: What is Streaming? -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">What is streaming?</h2>
+      <p class="text-lead mb-6"><span class="term" data-tip="Streaming delivers the AI response token-by-token as they're generated, instead of waiting for the complete response.">Streaming</span> shows tokens as they arrive, character by character, like someone is typing live.</p>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">👤</div>
+            <div class="flow-actor__name">You</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🔗</div>
+            <div class="flow-actor__name">API</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">🤖</div>
+            <div class="flow-actor__name">Tokens</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">📺</div>
+            <div class="flow-actor__name">You</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="streaming-demo">
+        <div style="margin-bottom: 8px; color: var(--color-text-muted);">Streaming response:</div>
+        <span class="streaming-token" style="animation-delay: 0ms;">H</span><span class="streaming-token" style="animation-delay: 150ms;">e</span><span class="streaming-token" style="animation-delay: 300ms;">l</span><span class="streaming-token" style="animation-delay: 450ms;">l</span><span class="streaming-token" style="animation-delay: 600ms;">o</span><span class="streaming-token" style="animation-delay: 750ms;">,</span><span class="streaming-token" style="animation-delay: 900ms;"> </span><span class="streaming-token" style="animation-delay: 1050ms;">w</span><span class="streaming-token" style="animation-delay: 1200ms;">o</span><span class="streaming-token" style="animation-delay: 1350ms;">r</span><span class="streaming-token" style="animation-delay: 1500ms;">l</span><span class="streaming-token" style="animation-delay: 1650ms;">d</span><span class="streaming-token" style="animation-delay: 1800ms;">!</span>
+      </div>
+
+      <div class="callout callout--accent">
+        <span class="callout__icon">⚡</span>
+        <div class="callout__content">
+          <div class="callout__title">Why streaming matters</div>
+          Users see responses in real-time instead of waiting seconds for the full response. It feels like chatting with a real person.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Build the REPL Skeleton -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Build the REPL skeleton</h2>
+      <p class="text-lead mb-6">A <span class="term" data-tip="REPL = Read-Eval-Print Loop. It reads input, evaluates it, prints the result, then loops back to wait for more input.">REPL</span> (Read-Eval-Print Loop) is the core pattern: read input, send to AI, print response, repeat.</p>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">Read input</div>
+            <div class="step-card__desc">Capture user message from the terminal input.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Send to model</div>
+            <div class="step-card__desc">Pass the message to the language model.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Stream response</div>
+            <div class="step-card__desc">Print tokens as they arrive from the API.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">4</div>
+          <div>
+            <div class="step-card__title">Loop</div>
+            <div class="step-card__desc">Wait for the next user message.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>💬</span>
+          <span>REPL loop in action</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            "fix the login bug"
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">AI</div>
+            <span class="typing-indicator"><span></span><span></span><span></span></span>
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">AI</div>
+            Let me look at the auth code...
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            "show me the files"
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Connect the LLM -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Connect the LLM</h2>
+      <p class="text-lead mb-6">Use <span class="term" data-tip="LangChain is a framework for building applications with language models. It provides abstractions for prompts, models, and tools.">LangChain</span> to connect to Anthropic's Claude model.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Connecting to Claude</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>from langchain_anthropic import ChatAnthropic</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span></span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>model = ChatAnthropic(</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    model="claude-sonnet-4-6",</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>)</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — Import LangChain's Anthropic chat model wrapper.</div>
+            <div class="english-line"><strong>Line 3-6</strong> — Create a chat model instance with your API key from environment.</div>
+            <div class="english-line">The model name <code>claude-sonnet-4-6</code> can be changed to any Anthropic model.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icon-row">
+        <div class="icon-item">
+          <span class="icon-item__emoji">🔑</span>
+          <span class="icon-item__label">ANTHROPIC_API_KEY</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">→</span>
+          <span class="icon-item__label">LangChain</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">→</span>
+          </div>
+          <span class="icon-item__label">Claude API</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Add Streaming -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Add streaming</h2>
+      <p class="text-lead mb-6">Use <code>.stream()</code> instead of <code>.invoke()</code> to get tokens as they arrive.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">stream() vs invoke()</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span># Non-streaming: waits for complete response</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>response = model.invoke(messages)</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span></span></span>
+<span class="code-line"><span class="code-line__num">4</span><span># Streaming: yields tokens as they arrive</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>for token in model.stream(messages):</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    print(token.content, end="", flush=True)</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 2</strong> — <code>invoke()</code> blocks until the complete response is ready.</div>
+            <div class="english-line"><strong>Line 5-6</strong> — <code>stream()</code> yields each token as it arrives. The <code>flush=True</code> forces immediate display.</div>
+            <div class="english-line">Streaming gives a 100-500ms perceived speedup for long responses.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">👤</div>
+            <div class="flow-actor__name">User</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🔗</div>
+            <div class="flow-actor__name">Claude API</div>
+          </div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">📺</div>
+            <div class="flow-actor__name">Token 1, Token 2...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-2">
+        <div class="quiz__question">The AI response is slow and you can't see any output until it's complete. What did you probably use instead of <code>stream()</code>?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a" data-correct="true">invoke() — it waits for the complete response</button>
+          <button class="quiz__option" data-answer="b">batch() — it's for processing multiple requests</button>
+          <button class="quiz__option" data-answer="c">ainvoke() — it's the async version of invoke</button>
+          <button class="quiz__option" data-answer="d">agenerate() — it's for async generation</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="a">Exactly! <code>invoke()</code> blocks until the complete response arrives. <code>stream()</code> yields tokens one by one as they arrive from the API.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b"><code>batch()</code> processes multiple requests at once, not a single streaming response.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c"><code>ainvoke()</code> is async but still waits for the complete response — no streaming.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d"><code>agenerate()</code> is for async generation but doesn't stream tokens.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 3: Giving the AI Tools -->
+<section class="module" id="module-3">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 3</div>
+      <h1 class="module__title">Giving the AI Tools</h1>
+      <p class="module__subtitle">Give the agent actual capabilities — read files, write files, run shell commands.</p>
+    </div>
+
+    <!-- Screen 1: What is a Tool? -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">What is a tool?</h2>
+      <p class="text-lead mb-6">A <span class="term" data-tip="A function the AI can invoke during conversation — like reading a file, running a command, or searching the web. The AI decides which tools to call based on your request.">tool</span> is a function the AI can call. The AI sees your request, decides it needs to read a file, and calls the tool directly.</p>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>🔧</span>
+          <span>Tool call flow — AI needs to read auth.py</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            "check the auth.py file"
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">AI</div>
+            <span class="typing-indicator"><span></span><span></span><span></span></span>
+          </div>
+          <div class="chat-bubble chat-bubble--center">Tool call: read_file(file_path="auth.py")</div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">Tool: read_file</div>
+            [47 lines of auth.py content]
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">AI</div>
+            Found the issue on line 34...
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">💡</span>
+        <div class="callout__content">
+          <div class="callout__title">Tool = function the AI can call</div>
+          Tools extend what the AI can do. Without tools, the AI can only text-chat. With tools, it can read files, run commands, search the web, and more.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Build ReadFileTool -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Build ReadFileTool</h2>
+      <p class="text-lead mb-6">Create a tool that lets the AI read files from the filesystem.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">ReadFileTool implementation</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>from langchain.tools import tool</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>from pathlib import Path</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span></span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>@tool</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>def read_file(file_path: str) -> str:</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    """Read content from a file."""</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    path = Path(file_path)</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>    if not path.exists():</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>        return f"Error: {file_path} not found"</span></span>
+<span class="code-line"><span class="code-line__num">10</span><span>    return path.read_text()</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — Import the <code>@tool</code> decorator from LangChain.</div>
+            <div class="english-line"><strong>Line 4</strong> — <code>@tool</code> decorator marks this as an AI-callable function.</div>
+            <div class="english-line"><strong>Line 5</strong> — The function name becomes the tool name: <code>read_file</code>.</div>
+            <div class="english-line"><strong>Line 6</strong> — The docstring becomes the tool description the AI reads.</div>
+            <div class="english-line"><strong>Line 7-10</strong> — Implementation: check existence, read and return content.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Build WriteFileTool -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Build WriteFileTool</h2>
+      <p class="text-lead mb-6">Create a tool that lets the AI write or overwrite files.</p>
+
+      <div class="translation-block">
+          </div>
+        <div class="translation-block__header">WriteFileTool implementation</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>@tool</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>def write_file(file_path: str, content: str) -> str:</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    """Write content to a file."""</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    path = Path(file_path)</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    path.parent.mkdir(parents=True, exist_ok=True)</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    path.write_text(content)</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    return f"Wrote {len(content)} chars to {file_path}"</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 2</strong> — Two parameters: <code>file_path</code> and <code>content</code>. The AI must provide both.</div>
+            <div class="english-line"><strong>Line 5</strong> — <code>mkdir(parents=True, exist_ok=True)</code> creates parent directories if needed.</div>
+            <div class="english-line"><strong>Line 6</strong> — <code>write_text()</code> overwrites the file with new content.</div>
+            <div class="english-line"><strong>Line 7</strong> — Return a confirmation message the AI can relay to you.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--accent">
+        <span class="callout__icon">⚠️</span>
+        <div class="callout__content">
+          <div class="callout__title">Security note</div>
+          File write tools are powerful. In module 4, we'll add a Human-in-the-Loop gate that asks for approval before writing.
+        </div>
+      </div>
+          </div>
+    </div>
+
+    <!-- Screen 4: Build ExecuteTool -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Build ExecuteTool</h2>
+      <p class="text-lead mb-6">Create a tool that runs <span class="term" data-tip="Shell commands are executed in a terminal, like 'ls', 'grep', or 'git commit'. The execute tool gives the AI shell access.">shell commands</span>.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">ExecuteTool implementation</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>import subprocess</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span></span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>@tool</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>def execute(command: str) -> str:</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    """Execute a shell command."""</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    result = subprocess.run(</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>        command, shell=True, capture_output=True, text=True</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>    )</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>    return result.stdout + result.stderr</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — <code>subprocess</code> runs external programs safely.</div>
+            <div class="english-line"><strong>Line 6-8</strong> — <code>subprocess.run()</code> executes the command. <code>shell=True</code> enables shell features.</div>
+            <div class="english-line"><strong>Line 9</strong> — Return both stdout (output) and stderr (errors).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">📂</div>
+          <div class="pattern-card__title">ls, cat, grep</div>
+          <div class="pattern-card__desc">Directory listing and file content inspection.</div>
+        </div>
+        <div class="pattern-card">
+          </div>
+          <div class="pattern-card__icon">🔍</div>
+          <div class="pattern-card__title">find, rg</div>
+          <div class="pattern-card__desc">Searching for files and content.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">⚙️</div>
+          <div class="pattern-card__title">git, npm</div>
+          <div class="pattern-card__desc">Version control and package management.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Wire Tools Into Agent -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Wire tools into the agent</h2>
+      <p class="text-lead mb-6">Pass the tools list to LangGraph's <span class="term" data-tip="create_react_agent creates a ReAct (Reasoning + Acting) agent that can use tools. It's the standard agent type in LangGraph.">create_react_agent</span>.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">create_react_agent with tools</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>from langgraph.prebuilt import create_react_agent</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span></span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>tools = [read_file, write_file, execute]</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span></span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>agent = create_react_agent(</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    model=model,</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    tools=tools,</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>)</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — Import the ReAct agent builder from LangGraph.</div>
+            <div class="english-line"><strong>Line 3</strong> — Collect all tools into a list.</div>
+            <div class="english-line"><strong>Line 5-8</strong> — Create the agent with the model and tools. The agent can now call any of these tools.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">👤</div>
+            <div class="flow-actor__name">User</div>
+          </div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">🤖</div>
+            <div class="flow-actor__name">Agent</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🔧</div>
+            <div class="flow-actor__name">Tools</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 6: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-3">
+        <div class="quiz__question">You want to add a web search tool. What do you add to the tools list?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">A new API key in config.py</button>
+          <button class="quiz__option" data-answer="b" data-correct="true">A function decorated with @tool, like web_search</button>
+          <button class="quiz__option" data-answer="c">A new command-line flag</button>
+          <button class="quiz__option" data-answer="d">A new submodule in app.py</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="b">Right! Tools are Python functions decorated with <code>@tool</code>. Add the function to the tools list passed to <code>create_react_agent()</code>.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">An API key is for authentication, but you still need a tool function to actually perform the search.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">Command-line flags are for CLI arguments, not agent capabilities. Tools are functions.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">Submodules organize code, but tools are functions that the agent can call.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 4: The Human-in-the-Loop Gate -->
+<section class="module module--warm" id="module-4">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 4</div>
+      <h1 class="module__title">The Human-in-the-Loop Gate</h1>
+      <p class="module__subtitle">Pause before dangerous operations, require approval.</p>
+    </div>
+
+    <!-- Screen 1: Why HITL? -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Why HITL?</h2>
+      <p class="text-lead mb-6">Imagine a bouncer at a club. The AI wants to do something risky — <code>rm -rf /tmp</code>, write to <code>auth.py</code>, search the web. It stops and asks: "Should I let this through?"</p>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🚪</span>
+        <div class="callout__content">
+          <div class="callout__title">The nightclub metaphor</div>
+          Without HITL: AI can run any tool, anytime — like a club with no bouncer. With HITL: AI pauses at dangerous tools and asks permission — like a club with a strict bouncer checking IDs.
+        </div>
+      </div>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">💻</div>
+          <div class="pattern-card__title">execute</div>
+          <div class="pattern-card__desc">Shell commands — most dangerous. Always gated.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">📝</div>
+          <div class="pattern-card__title">write_file</div>
+          <div class="pattern-card__desc">Creates or overwrites files.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🔍</div>
+          <div class="pattern-card__title">web_search</div>
+          <div class="pattern-card__desc">Uses API credits and shares your query.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🌐</div>
+          <div class="pattern-card__title">fetch_url</div>
+          <div class="pattern-card__desc">Reads content from any URL.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Design the Approval Prompt -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Design the approval prompt</h2>
+      <p class="text-lead mb-6">When a gated tool is called, the CLI shows an approval prompt with the tool name, arguments, and risk description.</p>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>🛑</span>
+          <span>HITL interrupt — AI wants to run rm -rf</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--center">
+            ⚠️ Tool approval required
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">Tool</div>
+            execute(command="rm -rf /tmp/test")
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">🤖 Agent</div>
+            <span class="typing-indicator"><span></span><span></span><span></span></span>
+          </div>
+          <div class="chat-bubble chat-bubble--center">
+            [Approve] [Reject] [Approve all future]
+          </div>
+        </div>
+      </div>
+
+      <div class="translation-block">
+        <div class="translation-block__header">interrupt_on config (from agent.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>execute_interrupt = {</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    "allowed_decisions": ["approve", "reject"],</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    "description": _format_execute_description,</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>}</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 2</strong> — The only decisions allowed: approve or reject. No auto-denial.</div>
+            <div class="english-line"><strong>Line 3</strong> — A function that formats the tool call description for the approval prompt.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Implement Interrupt Handler -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Implement the interrupt handler</h2>
+      <p class="text-lead mb-6">When a gated tool is called, LangGraph pauses and waits for a human decision.</p>
+
+          </div>
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">Detect tool call</div>
+            <div class="step-card__desc">Agent invokes a gated tool like execute or write_file.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Format description</div>
+            <div class="step-card__desc">Generate a human-readable description of what the tool will do.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Show approval menu</div>
+            <div class="step-card__desc">Display the tool call and [Approve] [Reject] buttons.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">4</div>
+          <div>
+            <div class="step-card__title">Wait for decision</div>
+            <div class="step-card__desc">Graph is paused. User clicks Approve or Reject.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">5</div>
+          <div>
+            <div class="step-card__title">Resume or reject</div>
+            <div class="step-card__desc">If approved, tool executes. If rejected, error is returned to agent.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Add --auto-approve Flag -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Add --auto-approve flag</h2>
+      <p class="text-lead mb-6">For <span class="term" data-tip="CI = Continuous Integration. Automated pipelines that run tests on every commit. In CI, there's no human to approve tool calls.">CI</span> and scripting, you can bypass all HITL gates with <code>--auto-approve</code>.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">auto_approve logic</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>if auto_approve:</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    # No interrupts - all tools run automatically</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    interrupt_on = {}</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>else:</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    # Full HITL for destructive operations</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    interrupt_on = _add_interrupt_on()</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1-3</strong> — When <code>auto_approve=True</code>, <code>interrupt_on={}</code> means no tools are gated. All tools run immediately.</div>
+            <div class="english-line"><strong>Line 4-6</strong> — When <code>auto_approve=False</code> (default), <code>_add_interrupt_on()</code> returns the full map of gated tools.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--accent">
+        <span class="callout__icon">⚡</span>
+        <div class="callout__content">
+          <div class="callout__title">When to use --auto-approve</div>
+          Use it in CI scripts, automated pipelines, or when you trust the AI completely. Never use it interactively with unfamiliar prompts.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-4">
+        <div class="quiz__question">A user reports: "I ran with --auto-approve and the AI deleted my entire project!" What went wrong?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">The auto-approve flag wasn't implemented correctly</button>
+          <button class="quiz__option" data-answer="b">--auto-approve bypasses ALL tool approvals, including dangerous ones like rm -rf</button>
+          <button class="quiz__option" data-answer="c">The AI should have refused to run dangerous commands anyway</button>
+          <button class="quiz__option" data-answer="d">HITL was working but the user clicked approve</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="b">Exactly! <code>--auto-approve</code> bypasses every HITL gate. With it enabled, the AI can run <code>rm -rf</code>, write files, anything — without asking. That's the intended behavior for CI, but dangerous interactively.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">The flag works exactly as designed — it bypasses all approvals.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">Without HITL, the AI will run any tool the task requires, including dangerous ones.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">With <code>--auto-approve</code>, no approval prompt is shown at all.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 5: Conversations That Remember -->
+<section class="module" id="module-5">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 5</div>
+      <h1 class="module__title">Conversations That Remember</h1>
+      <p class="module__subtitle">Add session management and message history.</p>
+    </div>
+
+    <!-- Screen 1: What is State? -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">What is state?</h2>
+      <p class="text-lead mb-6"><span class="term" data-tip="Stateless means each request is independent — no memory of previous requests. Stateful means the system remembers past interactions.">Stateless</span> vs <span class="term" data-tip="Stateful means the system maintains memory of past interactions across requests.">stateful</span>: a walkie-talkie is stateless (each message is independent), a phone call is stateful (you remember what was said before).</p>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>📞</span>
+          <span>Stateless vs Stateful</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You (stateless)</div>
+            "fix the bug"
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">AI</div>
+            "What bug? I don't know which bug you mean."
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You (stateful)</div>
+            "fix the bug"
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">AI</div>
+            "The login bug on line 34? I already found it..."
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🧠</span>
+        <div class="callout__content">
+          <div class="callout__title">Why state matters</div>
+          Without state, every message is treated as independent. The AI can't remember you just described a bug. With state, the AI reads the full conversation history.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Generate Thread IDs -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Generate thread IDs</h2>
+      <p class="text-lead mb-6">A <span class="term" data-tip="A thread ID is a unique identifier for a conversation session. It lets the system store and retrieve message history for a specific conversation.">thread ID</span> uniquely identifies each conversation session. Generate one with <code>uuid.uuid4()</code>.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">generate_thread_id()</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>import uuid</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span></span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>def generate_thread_id() -> str:</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    return str(uuid.uuid4())</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 4</strong> — <code>uuid.uuid4()</code> generates a random UUID like <code>"a1b2c3d4-..."</code>. Convert to string for storage.</div>
+            <div class="english-line">Each conversation session gets its own unique ID. This ID is used to store and retrieve message history.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">👤</div>
+          </div>
+            <div class="flow-actor__name">User starts session</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🆔</div>
+            <div class="flow-actor__name">Generate UUID</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">💾</div>
+            <div class="flow-actor__name">Store in session</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Store Message History -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Store message history</h2>
+      <p class="text-lead mb-6">After each exchange, append to a list that stores the conversation.</p>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">Capture user message</div>
+            <div class="step-card__desc">Store the human's message with role "user".</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Capture AI response</div>
+            <div class="step-card__desc">Store the AI's response with role "assistant".</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Append to history</div>
+            <div class="step-card__desc">Add both to the messages list.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">4</div>
+          <div>
+            <div class="step-card__title">Store in checkpoint</div>
+            <div class="step-card__desc">Save to disk or memory with thread_id as key.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Message history pattern</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>messages = []</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span></span></span>
+<span class="code-line"><span class="code-line__num">3</span><span># After user sends message</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>messages.append(HumanMessage(content="fix the bug"))</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span></span></span>
+<span class="code-line"><span class="code-line__num">6</span><span># After AI responds</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>messages.append(AIMessage(content="Which file?"))</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — Start with an empty messages list.</div>
+            <div class="english-line"><strong>Line 4</strong> — Append user's message as <code>HumanMessage</code>.</div>
+            <div class="english-line"><strong>Line 7</strong> — Append AI's response as <code>AIMessage</code>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Prepend History to Prompt -->
+          </div>
+    <div class="screen animate-in">
+      <h2 class="screen__title">Prepend history to each prompt</h2>
+      <p class="text-lead mb-6">Before sending a new message, prepend the full history so the AI has context.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Assembly with history</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>def build_prompt(user_message: str, history: list) -> list:</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    # Start with system prompt</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    messages = [SystemMessage(content=SYSTEM_PROMPT)]</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    # Add conversation history</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    messages.extend(history)</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    # Add current message</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    messages.append(HumanMessage(content=user_message))</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>    return messages</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 3</strong> — System message sets the AI's role and instructions.</div>
+            <div class="english-line"><strong>Line 5</strong> — <code>extend(history)</code> adds all previous messages.</div>
+            <div class="english-line"><strong>Line 7</strong> — Append the new user message at the end.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-flow">
+          </div>
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">📜</div>
+            <div class="flow-actor__name">History</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-4);">➕</div>
+            <div class="flow-actor__name">+ Current msg</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">🤖</div>
+            <div class="flow-actor__name">LLM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Add /clear Command -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Add /clear command</h2>
+      <p class="text-lead mb-6">The <code>/clear</code> slash command resets the conversation history for the current thread.</p>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>🧹</span>
+          <span>/clear command flow</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            /clear
+          </div>
+          <div class="chat-bubble chat-bubble--center">
+            Slash command detected — bypass_tier=QUEUED
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">CLI</div>
+            Chat cleared. Starting fresh thread.
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            "what were we just working on?"
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">AI</div>
+            I don't have context from a previous conversation. How can I help?
+          </div>
+        </div>
+      </div>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">User types /clear</div>
+            <div class="step-card__desc">Input starts with "/" — detected as slash command.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Clear message list</div>
+            <div class="step-card__desc">Set <code>messages = []</code> for current thread.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Confirm to user</div>
+            <div class="step-card__desc">Print "Chat cleared" message.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 6: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-5">
+        <div class="quiz__question">The AI keeps referencing a previous conversation even though you started a new session. What might be wrong?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">The thread ID wasn't regenerated for the new session</button>
+          <button class="quiz__option" data-answer="b">The AI is confused</button>
+          <button class="quiz__option" data-answer="c">The /clear command wasn't run</button>
+          <button class="quiz__option" data-answer="d">The history was never stored</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="a">Right! If the thread ID wasn't regenerated, the new session loads history from the old thread ID. Each new session should generate a fresh UUID.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b">The AI is just reading whatever history it's given. Check the thread ID.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">/clear clears the current thread's history, not the issue described.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">If history wasn't stored, the AI couldn't reference it.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 6: Skills and Middleware -->
+<section class="module module--warm" id="module-6">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 6</div>
+      <h1 class="module__title">Skills and Middleware</h1>
+      <p class="module__subtitle">Load custom instructions from files; build a middleware pipeline.</p>
+    </div>
+
+    <!-- Screen 1: What is a Skill? -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">What is a skill?</h2>
+      <p class="text-lead mb-6">A <span class="term" data-tip="A skill is a file containing custom instructions that augment the AI's capabilities. It's like rehearsal notes — extra context the AI reads before responding.">skill</span> is like rehearsal notes for the AI. You write instructions in a file, and the AI reads them before each response.</p>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🎭</span>
+        <div class="callout__content">
+          <div class="callout__title">The rehearsal notes metaphor</div>
+          An actor has a script, but the director also hands them notes before each scene. Skills are those notes — they don't replace the AI's base instructions, they add to them.
+        </div>
+      </div>
+
+      <div class="icon-row">
+        <div class="icon-item">
+          <span class="icon-item__emoji">📦</span>
+          <span class="icon-item__label">Built-in skills</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">👤</span>
+          <span class="icon-item__label">User skills (~/.deepagents/)</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">📁</span>
+          <span class="icon-item__label">Project skills (.deepagents/)</span>
+        </div>
+      </div>
+
+      <div class="file-tree">
+        <div class="file-tree__line"><span class="file-tree__indent">~/.deepagents/</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">├──</span><span class="file-tree__dir">coder/</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">│   ├──</span><span class="file-tree__name">AGENTS.md</span> — agent memory</div>
+        <div class="file-tree__line"><span class="file-tree__indent">│   └──</span><span class="file-tree__dir">skills/</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">│       ├──</span><span class="file-tree__name">python-best-practices.md</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">│       └──</span><span class="file-tree__name">git-workflow.md</span></div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Skills Directory Scanner -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Skills directory scanner</h2>
+      <p class="text-lead mb-6">Scan the skills directory for <code>.md</code> files and load their content.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Skills scanner (simplified)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>from pathlib import Path</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span></span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>def load_skills(skills_dir: Path) -> list[str]:</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    skills = []</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    if not skills_dir.exists():</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>        return skills</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    for path in skills_dir.iterdir():</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>        if path.suffix == ".md":</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>            skills.append(path.read_text())</span></span>
+<span class="code-line"><span class="code-line__num">10</span><span>    return skills</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 3</strong> — Takes a <code>skills_dir</code> path as input.</div>
+            <div class="english-line"><strong>Line 5-6</strong> — If directory doesn't exist, return empty list.</div>
+            <div class="english-line"><strong>Line 7-9</strong> — Loop through all files. If it's a <code>.md</code> file, read and append its content.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+          </div>
+
+    <!-- Screen 3: SkillsMiddleware -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">SkillsMiddleware</h2>
+      <p class="text-lead mb-6"><span class="term" data-tip="Middleware sits between the AI model and the tool layer, intercepting and potentially modifying requests and responses.">Middleware</span> intercepts each request and injects skill content before sending to the model.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Middleware pipeline (from agent.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>agent_middleware = []</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>agent_middleware.append(ConfigurableModelMiddleware())</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>agent_middleware.append(AskUserMiddleware())</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>agent_middleware.append(MemoryMiddleware())</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>agent_middleware.append(SkillsMiddleware())</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>agent_middleware.append(LocalContextMiddleware)</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — Start with an empty middleware list.</div>
+            <div class="english-line"><strong>Line 2</strong> — <strong>ConfigurableModel</strong>: wraps the LLM so it can be swapped.</div>
+            <div class="english-line"><strong>Line 3</strong> — <strong>AskUser</strong>: gives the AI a way to ask you questions.</div>
+            <div class="english-line"><strong>Line 4</strong> — <strong>Memory</strong>: loads persistent context from AGENTS.md.</div>
+            <div class="english-line"><strong>Line 5</strong> — <strong>Skills</strong>: injects custom skill instructions.</div>
+            <div class="english-line"><strong>Line 6</strong> — <strong>LocalContext</strong>: provides git info and directory tree.</div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>🔄</span>
+          <span>Middleware in action</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            "write a Python function"
+          </div>
+          <div class="chat-bubble chat-bubble--center">
+            SkillsMiddleware: Injects python-best-practices.md
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">AI</div>
+            Here's a Python function following best practices...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: MemoryMiddleware -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">MemoryMiddleware</h2>
+      <p class="text-lead mb-6">Memory middleware loads <code>AGENTS.md</code> files so the AI remembers past context across sessions.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">MemoryMiddleware (from agent.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>memory_sources = [</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    str(settings.get_user_agent_md_path(assistant_id)),</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>]</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>agent_middleware.append(</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    MemoryMiddleware(backend=FilesystemBackend(), sources=memory_sources)</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>)</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1-3</strong> — List of paths to memory files. <code>get_user_agent_md_path()</code> returns <code>~/.deepagents/{agent}/AGENTS.md</code>.</div>
+            <div class="english-line"><strong>Line 4-6</strong> — Create <code>MemoryMiddleware</code> with a filesystem backend and the memory sources list.</div>
+          </div>
+        </div>
+      </div>
+          </div>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-4);">📄</div>
+            <div class="flow-actor__name">AGENTS.md</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🧠</div>
+            <div class="flow-actor__name">MemoryMiddleware</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">🤖</div>
+            <div class="flow-actor__name">LLM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Load AGENTS.md -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Load AGENTS.md</h2>
+      <p class="text-lead mb-6">AGENTS.md files contain persistent instructions that override or extend the default system prompt.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">get_user_agent_md_path() (from config.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>@staticmethod</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>def get_user_agent_md_path(agent_name: str) -> Path:</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    return Path.home() / ".deepagents" / agent_name / "AGENTS.md"</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 2</strong> — Static method means you call it on the class, not an instance.</div>
+            <div class="english-line"><strong>Line 3</strong> — Returns <code>~/.deepagents/{agent_name}/AGENTS.md</code>.</div>
+          </div>
+        </div>
+          </div>
+      </div>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">👤</div>
+          <div class="pattern-card__title">User-level</div>
+          <div class="pattern-card__desc"><code>~/.deepagents/{agent}/AGENTS.md</code> — personal instructions for an agent.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">📁</div>
+          <div class="pattern-card__title">Project-level</div>
+          <div class="pattern-card__desc"><code>{project}/.deepagents/AGENTS.md</code> — project-specific instructions.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 6: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-6">
+        <div class="quiz__question">You want the AI to always know your company's API conventions. Where do you put that instruction?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">In a skill file in <code>~/.deepagents/{agent}/skills/</code></button>
+          <button class="quiz__option" data-answer="b">In the system prompt directly</button>
+          <button class="quiz__option" data-answer="c">In AGENTS.md</button>
+          <button class="quiz__option" data-answer="d">In a middleware configuration file</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="a">Right! Skills are loaded via <code>SkillsMiddleware</code> and injected into every prompt. Put the conventions in a <code>.md</code> file in the skills directory.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b">The system prompt is fixed. AGENTS.md and skills let you customize per-agent or per-project.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">AGENTS.md is for agent memory (past context), not static instructions. Use skills for conventions.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">Middleware configures which middleware to use, not what content they inject.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 7: Sandboxes and MCP -->
+<section class="module" id="module-7">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 7</div>
+      <h1 class="module__title">Sandboxes and MCP</h1>
+      <p class="module__subtitle">Run code in remote sandboxes; plug in MCP tool servers.</p>
+    </div>
+
+    <!-- Screen 1: Local vs Remote -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Local vs. remote execution</h2>
+      <p class="text-lead mb-6">By default, tools run on <span class="term" data-tip="Local execution means the AI's tools (file operations, shell commands) run on YOUR machine — your CPU, your filesystem.">your local machine</span>. With a <span class="term" data-tip="A sandbox is a remote virtual machine that runs code in a contained environment. Useful for running code that might be dangerous or resource-intensive.">sandbox</span>, tools run on a remote cloud VM.</p>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🏨</span>
+        <div class="callout__content">
+          <div class="callout__title">The hotel desk metaphor</div>
+          Local execution: you're at your own desk, you can do anything yourself. Remote sandbox: you're at a hotel front desk — you ask the concierge to do things for you, and they do it in the back.
+        </div>
+      </div>
+
+      <div class="icon-row">
+        <div class="icon-item">
+          <span class="icon-item__emoji">💻</span>
+          <span class="icon-item__label">Local — your machine</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">☁️</span>
+          <span class="icon-item__label">Sandbox — cloud VM</span>
+        </div>
+      </div>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🌊</div>
+          <div class="pattern-card__title">Modal</div>
+          <div class="pattern-card__desc">Serverless compute from Cohere.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🚀</div>
+          <div class="pattern-card__title">Daytona</div>
+          <div class="pattern-card__desc">Managed dev environments.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🔄</div>
+          <div class="pattern-card__title">Runloop</div>
+          <div class="pattern-card__desc">Remote execution platform.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">📊</div>
+          <div class="pattern-card__title">LangSmith</div>
+          <div class="pattern-card__desc">Tracing and evaluation.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Backend Interface Abstraction -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Backend interface abstraction</h2>
+      <p class="text-lead mb-6">The same tool calls route to different <span class="term" data-tip="A backend is the underlying system that actually executes file operations and shell commands. LocalBackend runs on your machine; SandboxBackend runs on a remote VM.">backends</span> depending on the sandbox setting.</p>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">🤖</div>
+            <div class="flow-actor__name">Agent</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🔀</div>
+            <div class="flow-actor__name">Router</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">💻</div>
+            <div class="flow-actor__name">LocalBackend</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px; opacity: 0.3;"></div>
+          <div class="flow-actor" style="opacity: 0.5;">
+            <div class="flow-actor__icon" style="background: var(--color-actor-4);">☁️</div>
+            <div class="flow-actor__name">SandboxBackend</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Backend selection (from agent.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>if sandbox is None:</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    # LOCAL MODE</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    backend = LocalShellBackend(root_dir=root_dir)</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>else:</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    # REMOTE SANDBOX MODE</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    backend = sandbox</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1-3</strong> — No sandbox: use <code>LocalShellBackend</code> for local file/shell operations.</div>
+            <div class="english-line"><strong>Line 4-6</strong> — With sandbox: use the provided sandbox backend (Modal, Daytona, etc.).</div>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Sandbox Detection -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Sandbox detection</h2>
+      <p class="text-lead mb-6">The CLI detects the sandbox type from the <code>--sandbox</code> flag and creates the appropriate backend.</p>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">Parse --sandbox flag</div>
+            <div class="step-card__desc"><code>--sandbox modal</code> or <code>--sandbox daytona</code></div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Create backend</div>
+            <div class="step-card__desc">Factory creates the appropriate sandbox client.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Inject into agent</div>
+            <div class="step-card__desc">Sandbox backend replaces local backend in the graph.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--accent">
+        <span class="callout__icon">🔌</span>
+        <div class="callout__content">
+          <div class="callout__title">Same API, different execution</div>
+          The agent calls <code>execute("ls")</code> — it doesn't know if it's running locally or remotely. The backend abstraction makes this transparent.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: MCP Integration -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">MCP integration</h2>
+      <p class="text-lead mb-6"><span class="term" data-tip="MCP = Model Context Protocol. It's like USB for AI — a standard way to connect AI models to external tools and data sources.">MCP</span> (Model Context Protocol) connects your AI to external tools via a standardized interface.</p>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🔌</span>
+        <div class="callout__content">
+          <div class="callout__title">MCP = USB for AI</div>
+          Just as USB lets you plug many devices into one port, MCP lets you connect many tool servers to one AI. The AI sees them all as available tools.
+        </div>
+      </div>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">Discover mcp.json</div>
+            <div class="step-card__desc">MCP config files declare available servers.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Spawn server processes</div>
+            <div class="step-card__desc">CLI starts each tool server as a subprocess.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Connect tools</div>
+            <div class="step-card__desc">Tools from MCP servers added to agent's tool list.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="file-tree">
+        <div class="file-tree__line"><span class="file-tree__name">mcp.json</span> — MCP server config</div>
+        <div class="file-tree__line"><span class="file-tree__line"><span class="file-tree__indent">{</span></span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">  "mcpServers": {</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">    "filesystem": {</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">      "command": "npx",</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">      "args": ["-y", "@modelcontextprotocol/server-filesystem"]</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">    }</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">  }</span></div>
+        <div class="file-tree__line"><span class="file-tree__indent">}</span></div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-7">
+        <div class="quiz__question">You want to add a new sandbox provider. What's the minimum you need to change?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">Rewrite the entire agent.py</button>
+          <button class="quiz__option" data-answer="b">Update command_registry.py</button>
+          <button class="quiz__option" data-answer="c" data-correct="true">Add a new backend class and update the factory</button>
+          <button class="quiz__option" data-answer="d">Modify every tool function</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="c">Right! The backend abstraction means you add a new backend class (conforming to the protocol) and register it in the factory. The agent code doesn't need changes.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">The whole point of the abstraction is avoiding that. You only add a new backend.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b">command_registry.py handles slash commands, not sandbox backends.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">Tools call the backend interface, they don't know about the implementation.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 8: Making It Feel Real -->
+<section class="module module--warm" id="module-8">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 8</div>
+      <h1 class="module__title">Making It Feel Real</h1>
+      <p class="module__subtitle">Slash commands, pretty output, polish.</p>
+    </div>
+
+    <!-- Screen 1: Slash Command Registry -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Slash command registry</h2>
+      <p class="text-lead mb-6">All <span class="term" data-tip="Slash commands are special commands that start with /, like /clear, /help, /model. They provide quick access to features without typing full sentences.">slash commands</span> are defined as <code>SlashCommand</code> entries in one place.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">SlashCommand dataclass (from command_registry.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>@dataclass(frozen=True, slots=True)</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>class SlashCommand:</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    name: str           # e.g. "/clear"</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    description: str   # shown in autocomplete</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    bypass_tier: BypassTier  # queue priority</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>    hidden_keywords: str = ""  # fuzzy match</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    aliases: tuple[str, ...] = ()</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — <code>frozen=True</code> makes it immutable. <code>slots=True</code> optimizes memory.</div>
+            <div class="english-line"><strong>Line 3</strong> — <code>name</code>: the command string users type.</div>
+          </div>
+            <div class="english-line"><strong>Line 4</strong> — <code>description</code>: shown in autocomplete dropdown.</div>
+            <div class="english-line"><strong>Line 5</strong> — <code>bypass_tier</code>: controls when the command can run (see below).</div>
+            <div class="english-line"><strong>Line 6</strong> — <code>hidden_keywords</code>: terms that also trigger this command in fuzzy search.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🚪</div>
+          <div class="pattern-card__title">ALWAYS</div>
+          <div class="pattern-card__desc">Run regardless of busy state (/quit)</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">⚡</div>
+          <div class="pattern-card__title">IMMEDIATE_UI</div>
+          <div class="pattern-card__desc">Open modal immediately (/model)</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">📤</div>
+          <div class="pattern-card__title">SIDE_EFFECT_FREE</div>
+          <div class="pattern-card__desc">Run now, defer output (/mcp)</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">⏳</div>
+          <div class="pattern-card__title">QUEUED</div>
+          <div class="pattern-card__desc">Wait for idle (/clear, /help)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Build /clear /model /help -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Build /clear, /model, /help</h2>
+      <p class="text-lead mb-6">Each slash command has a handler in the app that routes to the right function.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">SlashCommand entries (from command_registry.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>SlashCommand(</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    name="/clear",</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    description="Clear chat and start new thread",</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    bypass_tier=BypassTier.QUEUED,</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    hidden_keywords="reset",</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>),</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>SlashCommand(</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>    name="/model",</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>    description="Switch or configure model",</span></span>
+<span class="code-line"><span class="code-line__num">10</span><span>    bypass_tier=BypassTier.IMMEDIATE_UI,</span></span>
+<span class="code-line"><span class="code-line__num">11</span><span>),</span></span>
+<span class="code-line"><span class="code-line__num">12</span><span>SlashCommand(</span></span>
+<span class="code-line"><span class="code-line__num">13</span><span>    name="/help",</span></span>
+<span class="code-line"><span class="code-line__num">14</span><span>    description="Show help",</span></span>
+<span class="code-line"><span class="code-line__num">15</span><span>    bypass_tier=BypassTier.QUEUED,</span></span>
+<span class="code-line"><span class="code-line__num">16</span><span>),</span></span>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>/clear</strong> — Clears message history. QUEUED so it waits for the AI to finish.</div>
+          </div>
+            <div class="english-line"><strong>/model</strong> — Opens model selection UI. IMMEDIATE_UI so it doesn't wait.</div>
+            <div class="english-line"><strong>/help</strong> — Shows help. QUEUED to avoid interrupting active work.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>⌨️</span>
+          <span>Slash command routing</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            /model gpt-4o
+          </div>
+          <div class="chat-bubble chat-bubble--center">
+            Detected slash command: /model
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">CLI</div>
+            Switching to gpt-4o...
+          </div>
+        </div>
+      </div>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">👤</div>
+            <div class="flow-actor__name">Input</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🔍</div>
+            <div class="flow-actor__name">Parser</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">⚡</div>
+            <div class="flow-actor__name">Command</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">✅</div>
+            <div class="flow-actor__name">Execute</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Textual TUI Basics -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Textual TUI basics</h2>
+      <p class="text-lead mb-6"><span class="term" data-tip="Textual is a Python TUI framework built by the same people who made Rich. It provides reactive widgets, async support, and CSS styling for terminals.">Textual</span> builds the interactive terminal UI with widgets, async events, and CSS styling.</p>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🎨</span>
+        <div class="callout__content">
+          <div class="callout__title">Why Textual?</div>
+          Textual is async-native (perfect for streaming AI responses), reactive (widgets update automatically), and uses CSS for styling (familiar to web developers).
+        </div>
+      </div>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Minimal Textual app (adapted from app.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>from textual.app import App, ComposeResult</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>from textual.widgets import Static, Input</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span></span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>class MyApp(App):</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    def compose(self) -> ComposeResult:</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>        yield Static("Deep Agents CLI", id="header")</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>        yield Input(placeholder="Type a message...")</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span></span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>    async def on_input_submitted(self, event):</span></span>
+<span class="code-line"><span class="code-line__num">10</span><span>        await self.agent.run(event.value)</span></span>
+          </div>
+          <div class="translation-block__english">
+          </div>
+            <div class="english-line"><strong>Line 5-7</strong> — <code>compose()</code> declares the widget tree: a header and an input.</div>
+            <div class="english-line"><strong>Line 9-10</strong> — <code>on_input_submitted</code> is an event handler. When user presses Enter, it sends the message to the agent.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Glyph Auto-Detection -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Glyph auto-detection</h2>
+      <p class="text-lead mb-6">The CLI detects whether your terminal supports <span class="term" data-tip="Unicode glyphs are special characters like ⏺, ✓, ✗ that look better than ASCII alternatives like (*), [OK], [X].">Unicode glyphs</span> and falls back to ASCII if needed.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">Glyph detection (from config.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word;"><span class="code-line"><span class="code-line__num">1</span><span>def _detect_charset_mode() -> CharsetMode:</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    env_mode = os.environ.get("UI_CHARSET_MODE", "auto")</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    if env_mode == "unicode":</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>        return CharsetMode.UNICODE</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    if env_mode == "ascii":</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>        return CharsetMode.ASCII</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    # Auto: check stdout encoding and LANG</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>    encoding = getattr(sys.stdout, "encoding", "") or ""</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>    if "utf" in encoding.lower():</span></span>
+<span class="code-line"><span class="code-line__num">10</span><span>        return CharsetMode.UNICODE</span></span>
+<span class="code-line"><span class="code-line__num">11</span><span>    return CharsetMode.ASCII</span></span>
+          </div>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 2</strong> — Check <code>UI_CHARSET_MODE</code> env var first for explicit override.</div>
+            <div class="english-line"><strong>Line 8-10</strong> — Check stdout encoding. If it contains "utf", use Unicode glyphs.</div>
+            <div class="english-line"><strong>Line 11</strong> — Otherwise fall back to ASCII-safe glyphs.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icon-row">
+        <div class="icon-item">
+          <span class="icon-item__emoji">⏺ ✓ ✗</span>
+          <span class="icon-item__label">Unicode glyphs</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">(i) [OK] [X]</span>
+          <span class="icon-item__label">ASCII fallbacks</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Final Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Final check — build the full picture</h2>
+
+      <div class="quiz" id="quiz-module-8">
+        <div class="quiz__question">You've built the CLI with all 8 modules. A user runs <code>deepagents --sandbox modal --agent coder /clear</code>. Which flow is correct?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">Sandbox is set to modal, agent runs in cloud VM. /clear clears thread history. Both apply.</button>
+          <button class="quiz__option" data-answer="b">Sandbox flag is ignored because /clear is typed first</button>
+          <button class="quiz__option" data-answer="c">The CLI errors because --sandbox and /clear conflict</button>
+          <button class="quiz__option" data-answer="d">Agent defaults to "agent" because "coder" is not a valid agent name</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="a">Exactly! <code>--sandbox modal</code> sets remote execution for tools. <code>--agent coder</code> sets the agent name. <code>/clear</code> is a separate slash command that clears the thread. They're independent.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b">Flag order doesn't matter — all flags and commands are parsed independently.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">Sandbox and slash commands are independent features. They don't conflict.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">"coder" is a valid agent name. If it doesn't exist yet, it will be created.</div>
+      </div>
+
+      <div class="callout callout--success mt-8">
+        <span class="callout__icon">🎉</span>
+        <div class="callout__content">
+          <div class="callout__title">You've built the full CLI!</div>
+          From project setup to a polished TUI with streaming, tools, HITL gates, memory, skills, sandboxes, and slash commands. That's a real AI coding assistant.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- JAVASCRIPT -->
+<script>
+(function() {
+  'use strict';
+
+  // ========== TOOLTIP SYSTEM ==========
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip';
+  document.body.appendChild(tooltip);
+
+  function showTooltip(termEl) {
+    const tip = termEl.dataset.tip;
+    if (!tip) return;
+    tooltip.textContent = tip;
+    const rect = termEl.getBoundingClientRect();
+    tooltip.style.left = rect.left + 'px';
+    tooltip.style.top = (rect.bottom + 8) + 'px';
+    tooltip.classList.add('show');
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove('show');
+  }
+
+  // Mouse support
+  document.addEventListener('mouseover', function(e) {
+    if (e.target.classList.contains('term')) {
+      showTooltip(e.target);
+    }
+  });
+  document.addEventListener('mouseout', function(e) {
+    if (e.target.classList.contains('term')) {
+      hideTooltip();
+    }
+  });
+
+  // Touch support
+  document.addEventListener('touchstart', function(e) {
+    if (e.target.classList.contains('term')) {
+      e.preventDefault();
+      if (tooltip.classList.contains('show') && tooltip.dataset.for === e.target) {
+        hideTooltip();
+        tooltip.dataset.for = '';
+      } else {
+        hideTooltip();
+        showTooltip(e.target);
+        tooltip.dataset.for = e.target;
+      }
+    } else {
+      hideTooltip();
+      tooltip.dataset.for = '';
+    }
+  }, { passive: false });
+
+  // ========== QUIZ SYSTEM ==========
+  document.querySelectorAll('.quiz').forEach(function(quiz) {
+    const options = quiz.querySelectorAll('.quiz__option');
+    const feedbackDivs = quiz.querySelectorAll('.quiz__feedback');
+
+    options.forEach(function(option) {
+      option.addEventListener('click', function() {
+        if (option.classList.contains('disabled')) return;
+
+        const selectedAnswer = option.dataset.answer;
+        const isCorrect = option.dataset.correct === 'true';
+
+        // Disable all options
+        options.forEach(function(opt) {
+          opt.classList.add('disabled');
+        });
+
+        // Mark correct/incorrect
+        if (isCorrect) {
+          option.classList.add('correct');
+        } else {
+          option.classList.add('incorrect');
+          // Find and show correct answer
+          options.forEach(function(opt) {
+            if (opt.dataset.correct === 'true') {
+              opt.classList.add('correct');
+            }
+          });
+        }
+
+        // Show feedback
+        feedbackDivs.forEach(function(div) {
+          if (div.dataset.for === selectedAnswer) {
+            div.classList.add('show');
+          }
+        });
+      });
+    });
+  });
+
+  // ========== SCROLL ANIMATIONS ==========
+  const animateElements = document.querySelectorAll('.animate-in');
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  animateElements.forEach(function(el) {
+    observer.observe(el);
+  });
+
+  // ========== NAVIGATION ==========
+  const modules = document.querySelectorAll('.module');
+  const navDots = document.getElementById('navDots');
+  const navProgress = document.getElementById('navProgress');
+
+  // Create dots
+  modules.forEach(function(module, index) {
+    const dot = document.createElement('button');
+    dot.className = 'nav-dot';
+    dot.setAttribute('aria-label', 'Module ' + (index + 1));
+    dot.addEventListener('click', function() {
+      module.scrollIntoView({ behavior: 'smooth' });
+    });
+    navDots.appendChild(dot);
+  });
+
+  const dots = navDots.querySelectorAll('.nav-dot');
+
+  function updateNav() {
+    const scrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    const progress = (scrollY / (docHeight - windowHeight)) * 100;
+    navProgress.style.width = progress + '%';
+
+    // Find closest module to viewport center
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    const centerY = scrollY + windowHeight / 2;
+
+    modules.forEach(function(module, index) {
+      const rect = module.getBoundingClientRect();
+      const moduleCenter = rect.top + rect.height / 2;
+      const distance = Math.abs(moduleCenter - windowHeight / 2);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    dots.forEach(function(dot, index) {
+      dot.classList.toggle('active', index === closestIndex);
+    });
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+
+  // ========== KEYBOARD NAVIGATION ==========
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const activeIndex = Array.from(dots).findIndex(function(d) { return d.classList.contains('active'); });
+      const nextIndex = Math.min(activeIndex + 1, modules.length - 1);
+      modules[nextIndex].scrollIntoView({ behavior: 'smooth' });
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const activeIndex = Array.from(dots).findIndex(function(d) { return d.classList.contains('active'); });
+      const prevIndex = Math.max(activeIndex - 1, 0);
+      modules[prevIndex].scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  // ========== STAGGERED ANIMATIONS ==========
+  document.querySelectorAll('.module').forEach(function(module) {
+    const animatables = module.querySelectorAll('.animate-in');
+    animatables.forEach(function(el, index) {
+      el.style.transitionDelay = (index * 120) + 'ms';
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>
