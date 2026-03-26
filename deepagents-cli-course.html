@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Agents CLI — From the Outside In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-bg: #FAF7F2;
+  --color-bg-warm: #F5F0E8;
+  --color-bg-code: #1E1E2E;
+  --color-text: #2C2A28;
+  --color-text-secondary: #6B6560;
+  --color-text-muted: #9E9790;
+  --color-border: #E5DFD6;
+  --color-border-light: #EEEBE5;
+  --color-surface: #FFFFFF;
+  --color-surface-warm: #FDF9F3;
+  --color-accent: #D94F30;
+  --color-accent-hover: #C4432A;
+  --color-accent-light: #FDEEE9;
+  --color-accent-muted: #E8836C;
+  --color-success: #2D8B55;
+  --color-success-light: #E8F5EE;
+  --color-error: #C93B3B;
+  --color-error-light: #FDE8E8;
+  --color-info: #2A7B9B;
+  --color-info-light: #E4F2F7;
+  --color-actor-1: #D94F30;
+  --color-actor-2: #2A7B9B;
+  --color-actor-3: #7B6DAA;
+  --color-actor-4: #D4A843;
+  --color-actor-5: #2D8B55;
+  --font-display: 'Bricolage Grotesque', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+  --leading-loose: 1.8;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --content-width: 800px;
+  --content-width-wide: 1000px;
+  --nav-height: 50px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(44,42,40,0.05);
+  --shadow-md: 0 4px 12px rgba(44,42,40,0.08);
+  --shadow-lg: 0 8px 24px rgba(44,42,40,0.1);
+  --shadow-xl: 0 16px 48px rgba(44,42,40,0.12);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --stagger-delay: 120ms;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-snap-type: y proximity; scroll-behavior: smooth; font-size: 16px; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--leading-normal);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+::selection { background: var(--color-accent-light); color: var(--color-accent); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 2px; }
+
+/* NAV */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  z-index: 100;
+  background: rgba(250, 247, 242, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  gap: var(--space-6);
+}
+.nav-title {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nav-dots {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-left: auto;
+}
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  border: none;
+  padding: 0;
+}
+.nav-dot.active { background: var(--color-accent); transform: scale(1.3); }
+.nav-dot:hover:not(.active) { background: var(--color-text-muted); }
+.nav-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transition: width var(--duration-normal) var(--ease-out);
+  width: 0%;
+}
+
+/* MODULES */
+.module {
+  min-height: 100dvh;
+  scroll-snap-align: start;
+  padding: calc(var(--nav-height) + var(--space-12)) var(--space-8) var(--space-16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.module--warm { background: var(--color-bg-warm); }
+.module__inner { width: 100%; max-width: var(--content-width-wide); }
+.module__header { margin-bottom: var(--space-12); }
+.module__number {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+.module__title {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+.module__subtitle {
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  max-width: 600px;
+}
+
+/* SCREENS */
+.screen {
+  padding: var(--space-16) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.screen:last-child { border-bottom: none; }
+.screen__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-4);
+}
+.screen__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+  line-height: var(--leading-snug);
+}
+
+/* ANIMATE IN */
+.animate-in {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+              transform var(--duration-slow) var(--ease-out);
+}
+.animate-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* GRID LAYOUTS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+
+/* TEXT */
+.text-lead { font-size: var(--text-xl); line-height: var(--leading-loose); color: var(--color-text-secondary); }
+.text-sm { font-size: var(--text-sm); }
+.text-muted { color: var(--color-text-muted); }
+.text-accent { color: var(--color-accent); }
+.text-center { text-align: center; }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+.mt-8 { margin-top: var(--space-8); }
+.mt-12 { margin-top: var(--space-12); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+.mb-8 { margin-bottom: var(--space-8); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+/* TRANSLATION BLOCKS */
+.translation-block {
+  background: var(--color-bg-code);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin: var(--space-6) 0;
+}
+.translation-block__header {
+  padding: var(--space-3) var(--space-5);
+  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.translation-block__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.translation-block__code {
+  padding: var(--space-5);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  overflow-x: auto;
+}
+.translation-block__english {
+  padding: var(--space-5);
+  background: rgba(255,255,255,0.03);
+}
+.code-pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: #CDD6F4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.7;
+}
+.code-line { display: flex; gap: var(--space-4); }
+.code-line__num {
+  color: rgba(255,255,255,0.2);
+  user-select: none;
+  min-width: 1.5em;
+  text-align: right;
+  flex-shrink: 0;
+}
+.english-line {
+  color: rgba(255,255,255,0.75);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  padding: var(--space-1) 0;
+}
+
+/* CALLOUT */
+.callout {
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  margin: var(--space-6) 0;
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+.callout--accent { background: var(--color-accent-light); border-left: 4px solid var(--color-accent); }
+.callout--info { background: var(--color-info-light); border-left: 4px solid var(--color-info); }
+.callout--success { background: var(--color-success-light); border-left: 4px solid var(--color-success); }
+.callout__icon { font-size: var(--text-xl); flex-shrink: 0; line-height: 1.4; }
+.callout__content { font-size: var(--text-sm); line-height: var(--leading-loose); }
+.callout__title {
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-base);
+}
+
+/* STEP CARDS */
+.step-cards { display: flex; flex-direction: column; gap: var(--space-4); margin: var(--space-6) 0; }
+.step-card {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.step-card__num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-card__title { font-weight: 600; margin-bottom: var(--space-1); }
+.step-card__desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+/* GROUP CHAT */
+.group-chat {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin: var(--space-6) 0;
+  box-shadow: var(--shadow-md);
+}
+.group-chat__header {
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-warm);
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+.group-chat__body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+.chat-bubble {
+  max-width: 75%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  animation: bubbleIn 0.3s var(--ease-out);
+}
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.chat-bubble--left { align-self: flex-start; background: var(--color-bg-warm); border: 1px solid var(--color-border); }
+.chat-bubble--right { align-self: flex-end; background: var(--color-accent-light); border: 1px solid var(--color-accent-muted); }
+.chat-bubble--center { align-self: center; background: var(--color-info-light); border: 1px solid var(--color-info); font-size: var(--text-xs); color: var(--color-info); }
+.chat-bubble__sender { font-weight: 700; font-size: var(--text-xs); margin-bottom: var(--space-1); opacity: 0.7; }
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+}
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: typing 1.2s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* DATA FLOW */
+.data-flow {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  margin: var(--space-6) 0;
+  overflow-x: auto;
+}
+.data-flow__track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: max-content;
+}
+.flow-actor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 100px;
+}
+.flow-actor__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xl);
+  box-shadow: var(--shadow-md);
+}
+.flow-actor__name { font-size: var(--text-xs); font-weight: 600; text-align: center; }
+.flow-arrow {
+  flex: 1;
+  min-width: 60px;
+  height: 2px;
+  background: var(--color-border);
+  position: relative;
+  margin: 0 var(--space-2);
+}
+.flow-arrow::after {
+  content: '→';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}
+.flow-packet {
+  background: var(--color-accent);
+  color: white;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  animation: packetMove 1.5s ease-in-out infinite;
+}
+@keyframes packetMove {
+  0% { opacity: 0; transform: translateX(-20px); }
+  20% { opacity: 1; transform: translateX(0); }
+  80% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(20px); }
+}
+
+/* PATTERN CARDS */
+.pattern-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-5); margin: var(--space-6) 0; }
+.pattern-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
+}
+.pattern-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.pattern-card__icon { font-size: 2rem; margin-bottom: var(--space-3); }
+.pattern-card__title { font-family: var(--font-display); font-weight: 700; margin-bottom: var(--space-2); }
+.pattern-card__desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+/* BADGE */
+.badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.badge--accent { background: var(--color-accent-light); color: var(--color-accent); }
+.badge--info { background: var(--color-info-light); color: var(--color-info); }
+.badge--success { background: var(--color-success-light); color: var(--color-success); }
+
+/* QUIZ */
+.quiz {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  margin: var(--space-8) 0;
+  box-shadow: var(--shadow-sm);
+}
+.quiz__question {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+  line-height: var(--leading-snug);
+}
+.quiz__options { display: flex; flex-direction: column; gap: var(--space-3); }
+.quiz__option {
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--text-base);
+  transition: all var(--duration-fast) var(--ease-out);
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font-body);
+}
+.quiz__option:hover { border-color: var(--color-accent); background: var(--color-accent-light); }
+.quiz__option.correct { border-color: var(--color-success); background: var(--color-success-light); }
+.quiz__option.incorrect { border-color: var(--color-error); background: var(--color-error-light); }
+.quiz__option.disabled { pointer-events: none; opacity: 0.6; }
+.quiz__feedback {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-loose);
+  display: none;
+}
+.quiz__feedback.show { display: block; }
+.quiz__feedback--correct { background: var(--color-success-light); color: var(--color-success); }
+.quiz__feedback--incorrect { background: var(--color-error-light); color: var(--color-error); }
+
+/* TOOLTIP */
+.term {
+  border-bottom: 1.5px dashed var(--color-text-muted);
+  cursor: pointer;
+  position: relative;
+  display: inline;
+}
+.tooltip {
+  position: fixed;
+  background: var(--color-text);
+  color: white;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: var(--leading-loose);
+  max-width: 280px;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  display: none;
+}
+.tooltip.show { display: block; }
+.tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 16px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-text);
+  transform: rotate(45deg);
+}
+
+/* ICON ROWS */
+.icon-row {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin: var(--space-6) 0;
+}
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  min-width: 100px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.icon-item__emoji { font-size: var(--text-2xl); }
+.icon-item__label { font-size: var(--text-xs); color: var(--color-text-secondary); font-weight: 500; }
+
+/* FILE TREE */
+.file-tree {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  background: var(--color-bg-code);
+  color: #CDD6F4;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  margin: var(--space-6) 0;
+  overflow-x: auto;
+}
+.file-tree__line { display: flex; gap: var(--space-3); line-height: 1.8; }
+.file-tree__indent { color: rgba(255,255,255,0.2); user-select: none; }
+.file-tree__name { color: #89B4FA; }
+.file-tree__dir { color: #F9E2AF; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .module { padding: calc(var(--nav-height) + var(--space-8)) var(--space-5) var(--space-12); }
+  .module__title { font-size: var(--text-3xl); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .translation-block__grid { grid-template-columns: 1fr; }
+  .translation-block__code { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .pattern-cards { grid-template-columns: 1fr 1fr; }
+  .chat-bubble { max-width: 90%; }
+}
+@media (max-width: 480px) {
+  .module__title { font-size: var(--text-2xl); }
+  .nav-title { display: none; }
+  .pattern-cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-title">Deep Agents CLI — From the Outside In</span>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="nav-progress" id="navProgress"></div>
+</nav>
+
+
+<!-- MODULE 1: What This App Does -->
+<section class="module" id="module-1">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 1</div>
+      <h1 class="module__title">What This App Does</h1>
+      <p class="module__subtitle">You talk to an AI in your terminal. Here's what actually happens when you hit Enter.</p>
+    </div>
+
+    <!-- Screen 1: What is deepagents-cli -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">A coding assistant that lives in your terminal</h2>
+      <p class="text-lead mb-6">Deep Agents CLI is a <span class="term" data-tip="A command-line interface program — text-based, runs in your terminal window like old-school software.">CLI tool</span> that gives you an AI coding assistant powered by a large language model. Instead of opening a website, you type in your terminal and the AI reads files, writes code, runs shell commands, and searches the web — all as your user, on your machine.</p>
+      
+      <div class="icon-row">
+        <div class="icon-item">
+          <span class="icon-item__emoji">💬</span>
+          <span class="icon-item__label">Chat with AI</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">📁</span>
+          <span class="icon-item__label">Read & write files</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">⚡</span>
+          <span class="icon-item__label">Run shell commands</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🔍</span>
+          <span class="icon-item__label">Search the web</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🧠</span>
+          <span class="icon-item__label">Persistent memory</span>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">💡</span>
+        <div class="callout__content">
+          <div class="callout__title">Why does this matter?</div>
+          Unlike a chatbot in a browser, this AI has access to your actual project files. It can understand the code you're working on, make changes directly, and run tests — not just suggest what to write.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: The user journey -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">The journey of a single message</h2>
+      <p class="text-lead mb-6">Every time you type a message and press Enter, a carefully choreographed sequence fires up. Here's the ballet behind the scenes.</p>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">You type a message</div>
+            <div class="step-card__desc">Something like "add a login button to the settings page." The CLI captures your keystrokes in a text input widget.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">The message enters a queue</div>
+            <div class="step-card__desc">If the AI is already busy, your message waits. The queue makes sure the AI doesn't get overwhelmed by a flood of rapid requests.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">The AI reads the message and thinks</div>
+            <div class="step-card__desc">The AI model (running on a server somewhere, not your machine) reads your message along with your entire conversation history and project context.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">4</div>
+          <div>
+            <div class="step-card__title">The AI decides to use tools</div>
+            <div class="step-card__desc">It might call a <span class="term" data-tip="A function the AI can invoke — like a web search, file read, or shell command. The AI chooses which tools to call based on what you asked.">tool</span> like "read this file" or "run this command." Each tool call pauses the AI's response until the tool returns a result.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">5</div>
+          <div>
+            <div class="step-card__title">Results stream back to you</div>
+            <div class="step-card__desc">The AI's response — and any tool results — appear on screen in real time, character by character, like someone is typing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Data flow animation -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">A conversation in motion</h2>
+      <p class="text-lead mb-6">Here's that dance visualized as actors passing messages between each other.</p>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>💬</span>
+          <span>Live conversation trace — what happens when you type "fix the login bug"</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">You</div>
+            fix the login bug
+          </div>
+          <div class="chat-bubble chat-bubble--center">
+            Message queued. Waiting for AI...
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">Agent</div>
+            I'll look at the login code. Let me first find the relevant files.
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">Agent</div>
+            <span class="typing-indicator"><span></span><span></span><span></span></span>
+            Reading files...
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">Tool: read_file</div>
+            auth.py — 47 lines read ✓
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">Agent</div>
+            Found it. The session token isn't being refreshed on line 34. Let me fix that.
+          </div>
+          <div class="chat-bubble chat-bubble--right">
+            <div class="chat-bubble__sender">Tool: write_file</div>
+            auth.py — updated ✓
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">Agent</div>
+            Fixed! The token refresh was missing. I've also added a check for token expiry.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Code translation -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">What the entry point looks like</h2>
+      <p class="text-lead mb-6">When you run <code style="background:var(--color-bg-warm);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.9em">deepagents</code>, this is the first code that runs. The CLI decides whether to show the interactive app or handle a one-off command like <code style="background:var(--color-bg-warm);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.9em">list</code> or <code style="background:var(--color-bg-warm);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.9em">reset</code>.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">deepagents_cli/main.py — simplified</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word; line-height: 1.7;"><span class="code-line"><span class="code-line__num">1</span><span>def main() -> int:</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    args = parse_args()</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    if args.command == "run":</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>        run_app(args)        # ← starts the TUI</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>    elif args.command == "list":</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>        list_agents(args)    # ← prints agent list</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>    elif args.command == "reset":</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>        reset_agent(args)    # ← resets prompt</span></span>
+<span class="code-line"><span class="code-line__num">9</span><span>    return 0</span></span>
+</div>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — Defines the main function. Everything starts here.</div>
+            <div class="english-line"><strong>Line 2</strong> — Reads your command-line arguments (flags like <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">--agent</code>, <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">-r</code>).</div>
+            <div class="english-line"><strong>Line 3–4</strong> — If you typed just <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">deepagents</code> (no subcommand), fire up the interactive app.</div>
+            <div class="english-line"><strong>Line 5–6</strong> — If you typed <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">deepagents list</code>, print all known agents.</div>
+            <div class="english-line"><strong>Line 7–8</strong> — If you typed <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">deepagents reset</code>, reset the agent's prompt file.</div>
+            <div class="english-line"><strong>Line 9</strong> — Return 0 means "success." Any other number means an error happened.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-1">
+        <div class="quiz__question">You run <code>deepagents list</code>. Which path does the message take?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">The message goes to the AI model and back</button>
+          <button class="quiz__option" data-answer="b" data-correct="true">A separate code path handles it — no AI involved, just file listing</button>
+          <button class="quiz__option" data-answer="c">It queues behind any existing agent conversation</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="b">Exactly! <code>deepagents list</code> is a <span class="term" data-tip="A subcommand — a second-level command that does something specific, separate from the main app.">subcommand</span> that bypasses the AI entirely. It just reads the ~/.deepagents directory and prints what it finds. Same with <code>deepagents reset</code> and <code>deepagents skills</code>.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">Not quite — subcommands like <code>list</code> don't go near the AI at all. They're handled by separate functions that just read directories and print results.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 2: Meet the Actors -->
+<section class="module module--warm" id="module-2">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 2</div>
+      <h1 class="module__title">Meet the Actors</h1>
+      <p class="module__subtitle">Eight key characters work together to make this tool run. Knowing who does what helps you tell the AI where to put things.</p>
+    </div>
+
+    <!-- Screen 1: Actor map -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">The cast of characters</h2>
+      <p class="text-lead mb-6">Think of the CLI as a movie production. Each "actor" has a specific role. When you talk to the AI, you're directing the whole cast — but the AI needs to know which role to assign each task.</p>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🎬</div>
+          <div class="pattern-card__title">main.py</div>
+          <div class="pattern-card__desc">The director. Decides whether to launch the interactive app or handle a subcommand like <code>list</code> or <code>reset</code>. Runs first, exits fast.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🖥️</div>
+          <div class="pattern-card__title">app.py</div>
+          <div class="pattern-card__desc">The stage manager. Runs the Textual TUI — the interactive window, the chat history, the input box. Keeps everything rendered on screen.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🤖</div>
+          <div class="pattern-card__title">agent.py</div>
+          <div class="pattern-card__desc">The producer. Builds the AI agent — wires up the language model, tools, memory, and middleware. The architect of what the AI can do.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🔌</div>
+          <div class="pattern-card__title">textual_adapter.py</div>
+          <div class="pattern-card__desc">The translator. Converts between Textual UI events and LangGraph agent commands. Handles streaming, interrupts, and the approval menu.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">⚙️</div>
+          <div class="pattern-card__title">config.py</div>
+          <div class="pattern-card__desc">The stage crew. Handles settings, API keys, glyphs (symbols for the UI), and shell command allow-lists. Everything the app needs to know about its environment.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🛠️</div>
+          <div class="pattern-card__title">tools.py</div>
+          <div class="pattern-card__desc">The toolbox. Provides the agent's web search (via Tavily) and URL fetching tools. Optional — only active if API keys are configured.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🧠</div>
+          <div class="pattern-card__title">skills/</div>
+          <div class="pattern-card__desc">The rehearsal notes. Skills are like custom instructions that augment the AI — extra capabilities you can load from files on disk. The <span class="term" data-tip="Middleware sits between the AI model and the tool layer, intercepting and potentially modifying requests and responses.">middleware</span> loads and manages them.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">📝</div>
+          <div class="pattern-card__title">command_registry.py</div>
+          <div class="pattern-card__desc">The teleprompter. Defines all slash commands (<code>/clear</code>, <code>/model</code>, <code>/threads</code>, etc.) and their priority tiers — which ones can interrupt the AI mid-thought.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Group chat -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">How the actors talk to each other</h2>
+      <p class="text-lead mb-6">When you type a message, here's which actors exchange information.</p>
+
+      <div class="group-chat">
+        <div class="group-chat__header">
+          <span>🔄</span>
+          <span>Actor communication — "user asks to reset an agent"</span>
+        </div>
+        <div class="group-chat__body">
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">main.py</div>
+            Sees <code>--agent coder</code> flag. Passes to <code>cli_main()</code>.
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">agent.py</div>
+            <code>reset_agent()</code> reads the target agent's <code>AGENTS.md</code>. Deletes and recreates the directory.
+          </div>
+          <div class="chat-bubble chat-bubble--left">
+            <div class="chat-bubble__sender">config.py</div>
+            Provides the agent directory path via <code>settings.user_deepagents_dir</code>.
+          </div>
+          <div class="chat-bubble chat-bubble--center">
+            No AI involved at all! This is pure file I/O.
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--accent mt-8">
+        <span class="callout__icon">🎯</span>
+        <div class="callout__content">
+          <div class="callout__title">Why this matters for prompting AI</div>
+          When you say "reset the coder agent," the AI doesn't do the reset — it delegates to <code>agent.py</code>'s <code>reset_agent()</code> function. If you want to customize <em>how</em> the reset works, you'd edit that function, not ask the AI to "be better at resetting agents."
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-2">
+        <div class="quiz__question">You want to add a new slash command like <code>/build</code> that runs a build. Which file do you need to change?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">agent.py — that's where all the logic lives</button>
+          <button class="quiz__option" data-answer="b" data-correct="true">command_registry.py — that's where slash commands are defined</button>
+          <button class="quiz__option" data-answer="c">app.py — that's where the UI handles user input</button>
+          <button class="quiz__option" data-answer="d">config.py — that's where all settings live</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="b">Right! Slash commands are declared as <code>SlashCommand</code> entries in <code>command_registry.py</code>. Each entry specifies the name, description, and <em>bypass tier</em> (whether it can interrupt the AI mid-task).</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">Not quite — agent.py builds the agent graph but doesn't define UI commands. Slash commands are registered in <code>command_registry.py</code>.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">Close, but app.py handles the UI presentation of slash commands, not their definition. You define them in <code>command_registry.py</code>.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="d">config.py handles settings and configuration, not command definitions. Slash commands go in <code>command_registry.py</code>.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MODULE 3: How the Pieces Talk -->
+<section class="module" id="module-3">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 3</div>
+      <h1 class="module__title">How the Pieces Talk</h1>
+      <p class="module__subtitle">Data flows through the system in predictable patterns. Understanding the flow helps you debug "why isn't X showing up?"</p>
+    </div>
+
+    <!-- Screen 1: Message queue -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">The message queue — traffic control for the AI</h2>
+      <p class="text-lead mb-6">Imagine the AI as a busy executive. If five people send messages at once, they don't all interrupt — they wait in a queue. The AI processes them one at a time.</p>
+
+      <div class="callout callout--info mb-6">
+        <span class="callout__icon">🚦</span>
+        <div class="callout__content">
+          <div class="callout__title">The metaphor: an air traffic controller</div>
+          When planes line up to land, the controller doesn't let them all descend at once — they stack in a queue and get clearance one at a time. The message queue works the same way: it keeps requests orderly and prevents the AI from getting overwhelmed.
+        </div>
+      </div>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">You type a message</div>
+            <div class="step-card__desc">The Textual input widget captures it and submits it to the app's message bus.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">The queue decides priority</div>
+            <div class="step-card__desc">Some messages are <span class="term" data-tip="Commands that run no matter what the AI is doing — like /quit. They bypass the queue entirely.">always-bypass</span> (<code>/quit</code>). Others are <span class="term" data-tip="Commands that must wait until the AI is idle — like /clear or /remember.">queued</span> (<code>/clear</code>). The queue classifies each message and either lets it through immediately or makes it wait.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">The agent processes one at a time</div>
+            <div class="step-card__desc">While the agent is thinking or running tools, new messages wait. Once the agent is idle, the next message is pulled from the queue.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: HITL flow -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">The Human-in-the-Loop safety valve</h2>
+      <p class="text-lead mb-6">Before the AI can run certain "dangerous" operations — writing files, running shell commands, searching the web — it pauses and asks your permission. This is called <abbr class="term" data-tip="HITL = Human in the Loop. A design pattern where an AI pauses before sensitive actions and asks a human for approval.">HITL</abbr>.</p>
+
+      <div class="data-flow">
+        <div class="data-flow__track" style="justify-content: center; gap: 16px;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">🤖</div>
+            <div class="flow-actor__name">Agent</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🛑</div>
+            <div class="flow-actor__name">HITL Interrupt</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">👤</div>
+            <div class="flow-actor__name">You (approve/reject)</div>
+          </div>
+          <div class="flow-arrow" style="position:relative;flex:none;width:40px;"></div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">⚡</div>
+            <div class="flow-actor__name">Tool executes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--accent">
+        <span class="callout__icon">🔐</span>
+        <div class="callout__content">
+          <div class="callout__title">What gets gated?</div>
+          Shell commands (<code>execute</code>), file writes/edits (<code>write_file</code>, <code>edit_file</code>), web search, URL fetching, and subagent delegation are all behind the HITL gate. If you run with <code>-y</code> / <code>--auto-approve</code>, all gates open automatically.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Middleware pipeline -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">The middleware pipeline</h2>
+      <p class="text-lead mb-6">Middleware is like a series of filters that every AI request and response passes through. Each one can inspect, modify, or act on the data.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">How middleware is stacked (simplified from agent.py)</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word; line-height: 1.7;"><span class="code-line"><span class="code-line__num">1</span><span>agent_middleware = []</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>agent_middleware.append(ConfigurableModelMiddleware())</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>agent_middleware.append(AskUserMiddleware())   # ← AI asks you questions</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>agent_middleware.append(MemoryMiddleware())     # ← persistent memory</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>agent_middleware.append(SkillsMiddleware())    # ← loaded skills</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>agent_middleware.append(LocalContextMiddleware) # ← git info, file tree</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>agent_middleware.append(SummarizationMiddleware) # ← context window management</span></span>
+</div>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 1</strong> — Start with an empty list of middleware.</div>
+            <div class="english-line"><strong>Line 2</strong> — <strong>ConfigurableModel</strong>: wraps the language model so it can be swapped or configured at runtime.</div>
+            <div class="english-line"><strong>Line 3</strong> — <strong>AskUser</strong>: gives the AI a tool to ask <em>you</em> clarifying questions mid-task.</div>
+            <div class="english-line"><strong>Line 4</strong> — <strong>Memory</strong>: loads persistent context from <code>AGENTS.md</code> files so the AI remembers past conversations.</div>
+            <div class="english-line"><strong>Line 5</strong> — <strong>Skills</strong>: injects custom instructions from skill files on disk.</div>
+            <div class="english-line"><strong>Line 6</strong> — <strong>LocalContext</strong>: provides git branch, directory tree, and project info to the AI.</div>
+            <div class="english-line"><strong>Line 7</strong> — <strong>Summarization</strong>: compresses old messages when the context window gets full.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🧩</span>
+        <div class="callout__content">
+          <div class="callout__title">Middleware ordering matters</div>
+          Each middleware sees the output of the one before it. Memory is added before Skills so that skill loading can reference memories. AskUser is added early so its tool is available for the whole conversation.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-3">
+        <div class="quiz__question">A user reports: "I asked the AI to search for something but it just ignored my message." What might be happening?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">The web search tool isn't installed</button>
+          <button class="quiz__option" data-answer="b">The message is sitting in the queue waiting for the AI to finish its current task</button>
+          <button class="quiz__option" data-answer="c">The AI decided not to use the search tool this time</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="b">Right! The message queue is working as designed — if the AI is currently running a tool or thinking, new messages wait in the queue. This is the "traffic control" behavior from this module.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">Possible, but the more likely explanation is the queue — the AI might be busy with a previous request.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">The AI can choose not to use a tool, but it would at least respond to your message explaining why. If the message was silently ignored, it's likely queued.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MODULE 4: The Outside World -->
+<section class="module module--warm" id="module-4">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 4</div>
+      <h1 class="module__title">The Outside World</h1>
+      <p class="module__subtitle">The CLI doesn't run in isolation — it talks to language models, external APIs, MCP servers, and optional sandbox clouds.</p>
+    </div>
+
+    <!-- Screen 1: Models -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Language models — the brain</h2>
+      <p class="text-lead mb-6">The AI "brain" isn't running on your machine — it's a remote <span class="term" data-tip="An API hosted by a company (like Anthropic, OpenAI, or Google) that runs AI models. You send text, it sends back text.">language model API</span>. The CLI supports multiple providers.</p>
+
+      <div class="grid-3 mb-6">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🧠</div>
+          <div class="pattern-card__title">Anthropic Claude</div>
+          <div class="pattern-card__desc">Set <code>ANTHROPIC_API_KEY</code>. Specify model with <code>--model anthropic:claude-sonnet-4-6</code>.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🤖</div>
+          <div class="pattern-card__title">OpenAI GPT</div>
+          <div class="pattern-card__desc">Set <code>OPENAI_API_KEY</code>. Specify with <code>--model gpt-4o</code>.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🌴</div>
+          <div class="pattern-card__title">Google Gemini</div>
+          <div class="pattern-card__desc">Set <code>GOOGLE_API_KEY</code> or use Vertex AI via <code>GOOGLE_CLOUD_PROJECT</code>.</div>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🔑</span>
+        <div class="callout__content">
+          <div class="callout__title">How models are configured</div>
+          The <code>model_config.py</code> file maps provider names to environment variables. When you pass <code>--model anthropic:claude-sonnet-4-6</code>, the CLI looks up <code>ANTHROPIC_API_KEY</code> and creates the appropriate LangChain model client. Adding a new provider means updating that mapping.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: MCP -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">MCP servers — plugging in external tools</h2>
+      <p class="text-lead mb-6"><abbr class="term" data-tip="Model Context Protocol — a standard for connecting AI systems to external tools and data sources. Like a USB port for AI.">MCP</abbr> lets the CLI connect to external tool servers. Think of it like plugging a USB device into your computer — the tool appears as if it were built-in.</p>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">The CLI finds MCP configs</div>
+            <div class="step-card__desc">It scans for <code>mcp.json</code> or <code>mcp.yaml</code> files in your project and home directory, plus any path passed via <code>--mcp-config</code>.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">Servers are started</div>
+            <div class="step-card__desc">Each server is spawned as a subprocess. The CLI communicates with it over <abbr class="term" data-tip="Standard input/output — text streams programs use to communicate. MCP servers receive commands via stdin and respond via stdout.">stdio</abbr>.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Tools become available to the AI</div>
+            <div class="step-card__desc">The AI sees MCP tools alongside its built-in tools. You can approve or reject individual MCP tool calls in the HITL menu.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Sandboxes -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Sandboxes — running code safely in the cloud</h2>
+      <p class="text-lead mb-6">By default, the AI runs shell commands on <em>your</em> machine. But you can point it at a remote <span class="term" data-tip="A remote Linux machine that runs in a cloud provider's data center. Your code runs there instead of on your local machine.">sandbox</span> — useful for dangerous operations or cross-platform testing.</p>
+
+      <div class="icon-row">
+        <div class="icon-item">
+          <span class="icon-item__emoji">☁️</span>
+          <span class="icon-item__label">LangSmith</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🚀</span>
+          <span class="icon-item__label">Agentcore</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🔷</span>
+          <span class="icon-item__label">Modal</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🏄</span>
+          <span class="icon-item__label">Daytona</span>
+        </div>
+        <div class="icon-item">
+          <span class="icon-item__emoji">🔄</span>
+          <span class="icon-item__label">Runloop</span>
+        </div>
+      </div>
+
+      <div class="callout callout--accent">
+        <span class="callout__icon">📍</span>
+        <div class="callout__content">
+          <div class="callout__title">Local vs. Remote — the key difference</div>
+          In local mode, the CLI's <code>LocalShellBackend</code> runs commands on your machine. In sandbox mode, the CLI sends commands to a remote Linux VM and streams results back. The UI and UX are nearly identical — but your files are on the remote machine, not yours.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-4">
+        <div class="quiz__question">You want the AI to have access to your company's internal API docs. What's the best approach?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">Add them to the <code>AGENTS.md</code> file so the AI always has context</button>
+          <button class="quiz__option" data-answer="b">Build an MCP server that wraps the API and connect it via <code>--mcp-config</code></button>
+          <button class="quiz__option" data-answer="c">Ask the AI to remember the API docs at the start of every conversation</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="b">Right! An MCP server is the right tool for providing structured, up-to-date access to an external API. The AI can call its tools on demand, and the MCP protocol handles the communication.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">AGENTS.md is for high-level instructions, not large reference data. stuffing API docs in there would bloat the context window.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">That relies on the AI's memory, which is imprecise and context-limited. An MCP server is the structured, reliable solution.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- MODULE 5: Clever Tricks -->
+<section class="module" id="module-5">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 5</div>
+      <h1 class="module__title">The Clever Tricks</h1>
+      <p class="module__subtitle">Several smart patterns make this CLI feel polished: lazy loading, context summarization, unicode security, and a smart shell allow-list.</p>
+    </div>
+
+    <!-- Screen 1: Lazy loading -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Lazy loading — keeping startup fast</h2>
+      <p class="text-lead mb-6">The CLI must launch quickly — even for a simple <code>deepagents --version</code>. Heavy imports (the AI SDK, LangChain, Textual) are deferred until they're actually needed.</p>
+
+      <div class="translation-block">
+        <div class="translation-block__header">config.py — bootstrap pattern</div>
+        <div class="translation-block__grid">
+          <div class="translation-block__code">
+<div class="code-pre" style="white-space: pre-wrap; word-break: break-word; line-height: 1.7;"><span class="code-line"><span class="code-line__num">1</span><span>def _ensure_bootstrap() -> None:</span></span>
+<span class="code-line"><span class="code-line__num">2</span><span>    global _bootstrap_done</span></span>
+<span class="code-line"><span class="code-line__num">3</span><span>    if _bootstrap_done: return</span></span>
+<span class="code-line"><span class="code-line__num">4</span><span>    with _bootstrap_lock:</span></span>
+<span class="code-line"><span class="code-line__num">5</span><span>        if _bootstrap_done: return  # double-check</span></span>
+<span class="code-line"><span class="code-line__num">6</span><span>        _load_dotenv()             # read .env file</span></span>
+<span class="code-line"><span class="code-line__num">7</span><span>        _override_langsmith_project()</span></span>
+<span class="code-line"><span class="code-line__num">8</span><span>        _bootstrap_done = True</span></span>
+</div>
+          </div>
+          <div class="translation-block__english">
+            <div class="english-line"><strong>Line 3</strong> — If bootstrap already ran, exit immediately. No work needed.</div>
+            <div class="english-line"><strong>Line 4</strong> — <strong>Thread lock</strong>: prevents two threads from running bootstrap simultaneously (important in a Textual app where background workers may start concurrently).</div>
+            <div class="english-line"><strong>Line 5</strong> — <strong>Double-checked locking</strong>: after acquiring the lock, check again. The first thread sets the flag; subsequent threads skip everything.</div>
+            <div class="english-line"><strong>Line 6</strong> — Read the <code>.env</code> file from the project root (or cwd) to load API keys and config.</div>
+            <div class="english-line"><strong>Line 7</strong> — Override the <code>LANGSMITH_PROJECT</code> env var so agent traces go to a separate LangSmith project from the user's own traces.</div>
+            <div class="english-line"><strong>Line 8</strong> — Mark bootstrap done. Future calls exit at line 3.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout--success">
+        <span class="callout__icon">⚡</span>
+        <div class="callout__content">
+          <div class="callout__title">The startup hot path</div>
+          <code>deepagents --help</code> and <code>deepagents --version</code> should be near-instant. They trigger zero SDK imports. The Textual app itself only imports heavy packages after the splash screen renders.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Context window management -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Context window management — the "offload" trick</h2>
+      <p class="text-lead mb-6">AI models have a maximum context window — a limit on how many tokens (words, roughly) they can see at once. Long conversations eventually hit that limit. The CLI handles this with a <strong>summarization middleware</strong>.</p>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-card__num">1</div>
+          <div>
+            <div class="step-card__title">Older messages are offloaded</div>
+            <div class="step-card__desc">When context gets tight, older messages are sent to a separate storage backend (<code>/conversation_history/</code>) and replaced with a compact summary.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">2</div>
+          <div>
+            <div class="step-card__title">The AI gets the summary</div>
+            <div class="step-card__desc">The model sees a short recap instead of the full history, freeing up context space for new work.</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-card__num">3</div>
+          <div>
+            <div class="step-card__title">Full history is preserved</div>
+            <div class="step-card__desc">The actual conversation is stored in a virtual filesystem. It's retrievable — just not visible to the model unless explicitly fetched.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Unicode security -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Unicode security — hiding malicious commands</h2>
+      <p class="text-lead mb-6">Some characters look identical but are actually different — an attacker could hide a dangerous command inside what looks like a harmless string. The CLI scans for this.</p>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🔍</div>
+          <div class="pattern-card__title">Detection</div>
+          <div class="pattern-card__desc">The <code>detect_dangerous_unicode()</code> function scans shell commands for homoglyph attacks — characters that look like normal letters but are actually from a different Unicode script.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">⚠️</div>
+          <div class="pattern-card__title">Warning</div>
+          <div class="pattern-card__desc">If detected, the command is shown with the hidden characters revealed using visual markers (red highlighting on the dangerous codepoints).</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🚫</div>
+          <div class="pattern-card__title">Blocking</div>
+          <div class="pattern-card__desc">Commands with certain dangerous patterns — <code>$(...)</code>, backticks, redirects — are blocked entirely, even if the base command is on the allow-list.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-5">
+        <div class="quiz__question">Why does the CLI use a double-checked locking pattern in <code>_ensure_bootstrap()</code>?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">To make the function run faster</button>
+          <button class="quiz__option" data-answer="b" data-correct="true">To prevent two threads from running bootstrap simultaneously</button>
+          <button class="quiz__option" data-answer="c">To make sure the .env file is read twice for reliability</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="b">Exactly! The first check (outside the lock) lets most calls exit instantly. The second check (inside the lock) prevents two threads from both seeing <code>_bootstrap_done = False</code> and running bootstrap concurrently. This is a standard concurrency pattern.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">The lock actually slows things down slightly. The benefit is safety, not speed.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">Reading .env twice would be a bug, not a feature. The double-check prevents concurrent execution.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MODULE 6: When Things Break -->
+<section class="module module--warm" id="module-6">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 6</div>
+      <h1 class="module__title">When Things Break</h1>
+      <p class="module__subtitle">Knowing how to debug means knowing where to look. Here's the map.</p>
+    </div>
+
+    <!-- Screen 1: Debugging -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">The debugging map</h2>
+      <p class="text-lead mb-6">When something goes wrong, the first question is: <em>where</em> did it happen? Here's where to look for different problem types.</p>
+
+      <div class="pattern-cards">
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🤖</div>
+          <div class="pattern-card__title">AI gives a bad response</div>
+          <div class="pattern-card__desc">Check the system prompt in <code>agent.py</code>'s <code>get_system_prompt()</code>. Also check the model's <code>AGENTS.md</code> file for conflicting instructions. Try <code>/clear</code> to start a fresh conversation.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">⛔</div>
+          <div class="pattern-card__title">Tool call denied</div>
+          <div class="pattern-card__desc">Check the HITL configuration in <code>_add_interrupt_on()</code> in <code>agent.py</code>. Is the tool listed there? Is <code>auto_approve</code> mode on?</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🐛</div>
+          <div class="pattern-card__title">Tool doesn't work</div>
+          <div class="pattern-card__desc">Check the tool definition in the SDK (not the CLI). The CLI wraps tools from <code>deepagents</code>. Run <code>deepagents -n "list your tools"</code> to see what the agent actually has.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🔑</div>
+          <div class="pattern-card__title">API key errors</div>
+          <div class="pattern-card__desc">Check <code>config.py</code>'s <code>Settings.from_environment()</code>. API keys should come from environment variables. Make sure the right variable is set for your provider.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">🔀</div>
+          <div class="pattern-card__title">Slash command not found</div>
+          <div class="pattern-card__desc">Check <code>command_registry.py</code>'s <code>COMMANDS</code> tuple. Is the command listed there? Also check the <code>bypass_tier</code> — if it's wrong, the command might not be accessible in the current context.</div>
+        </div>
+        <div class="pattern-card">
+          <div class="pattern-card__icon">📝</div>
+          <div class="pattern-card__title">Memory not working</div>
+          <div class="pattern-card__desc">Check the <code>MemoryMiddleware</code> setup in <code>create_cli_agent()</code>. Make sure <code>AGENTS.md</code> files exist at the expected paths. Run <code>deepagents list</code> to see known agents.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: LangSmith traces -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">LangSmith — the flight recorder</h2>
+      <p class="text-lead mb-6">Every agent run is recorded in LangSmith if <code>LANGSMITH_TRACING</code> is enabled. You can replay conversations, see tool calls, measure token usage, and spot where the AI went off-track.</p>
+
+      <div class="callout callout--info">
+        <span class="callout__icon">🔗</span>
+        <div class="callout__content">
+          <div class="callout__title">The /trace slash command</div>
+          While in the CLI, type <code>/trace</code> to open the current thread's LangSmith trace in your browser. This is the fastest way to inspect what the AI actually did — every tool call, every decision, every token.
+        </div>
+      </div>
+
+      <div class="callout callout--accent mt-6">
+        <span class="callout__icon">📌</span>
+        <div class="callout__content">
+          <div class="callout__title">The project separation trick</div>
+          The CLI overrides <code>LANGSMITH_PROJECT</code> so agent traces go to a separate project from your own code's traces. This keeps the "noise" of your development work separate from the AI's decision trail.
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Check your understanding</h2>
+
+      <div class="quiz" id="quiz-module-6">
+        <div class="quiz__question">A user reports: "The AI keeps ignoring my instructions in AGENTS.md." Where do you start debugging?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a">Check if the AGENTS.md file is in the right directory (~/.deepagents/agent-name/)</button>
+          <button class="quiz__option" data-answer="b">Check if MemoryMiddleware is loading that specific AGENTS.md path</button>
+          <button class="quiz__option" data-answer="c" data-correct="true">All of the above — and also check if the AGENTS.md content actually contains the instructions in question</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="c">Right! The full debugging chain is: (1) file exists at the right path, (2) MemoryMiddleware is pointing to it, (3) the content actually says what you think it says. Any one of these failing breaks the chain.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="a">That's part of it, but there are two other possible failure points — the middleware and the content itself.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b">That's part of it too — but don't forget to check the file exists and the content is correct.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MODULE 7: The Big Picture -->
+<section class="module" id="module-7">
+  <div class="module__inner">
+
+    <div class="module__header animate-in">
+      <div class="module__number">Module 7</div>
+      <h1 class="module__title">The Big Picture</h1>
+      <p class="module__subtitle">Let's zoom all the way out and see the entire architecture at a glance.</p>
+    </div>
+
+    <!-- Screen 1: Architecture diagram -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">The full architecture</h2>
+
+      <div class="data-flow" style="flex-direction: column; gap: 24px;">
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-1);">👤</div>
+            <div class="flow-actor__name">You (terminal)</div>
+          </div>
+        </div>
+        <div style="text-align: center; color: var(--color-text-muted); font-size: 24px;">↓</div>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🎬</div>
+            <div class="flow-actor__name">main.py</div>
+          </div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🖥️</div>
+            <div class="flow-actor__name">app.py (Textual TUI)</div>
+          </div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-3);">🔌</div>
+            <div class="flow-actor__name">textual_adapter.py</div>
+          </div>
+        </div>
+        <div style="text-align: center; color: var(--color-text-muted); font-size: 24px;">↓</div>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-2);">🤖</div>
+            <div class="flow-actor__name">agent.py (LangGraph agent)</div>
+          </div>
+        </div>
+        <div style="text-align: center; color: var(--color-text-muted); font-size: 24px;">↓</div>
+        <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-4);">⚙️</div>
+            <div class="flow-actor__name">Middleware stack</div>
+          </div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-4);">🧠</div>
+            <div class="flow-actor__name">Memory</div>
+          </div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-4);">📝</div>
+            <div class="flow-actor__name">Skills</div>
+          </div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-4);">🔍</div>
+            <div class="flow-actor__name">MCP tools</div>
+          </div>
+        </div>
+        <div style="text-align: center; color: var(--color-text-muted); font-size: 24px;">↓</div>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">☁️</div>
+            <div class="flow-actor__name">Language Model API</div>
+          </div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">🖥️</div>
+            <div class="flow-actor__name">Shell / Filesystem</div>
+          </div>
+          <div class="flow-actor">
+            <div class="flow-actor__icon" style="background: var(--color-actor-5);">🌐</div>
+            <div class="flow-actor__name">Web APIs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Key design decisions -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Why it's built this way</h2>
+      <p class="text-lead mb-6">These aren't accidental — each decision solves a specific problem.</p>
+
+      <div class="grid-2">
+        <div class="callout callout--accent" style="flex-direction: column; gap: var(--space-3);">
+          <div class="callout__title">Textual for the TUI</div>
+          <div class="callout__content">Textual was chosen over alternatives (Blessed, npyscreen) because it has first-class async support, reactive state management, and a modern widget model. The learning curve pays off in maintainability.</div>
+        </div>
+        <div class="callout callout--accent" style="flex-direction: column; gap: var(--space-3);">
+          <div class="callout__title">LangGraph under the hood</div>
+          <div class="callout__content">The SDK uses LangGraph (from LangChain) to manage the agent's state machine. This handles tool calling, retries, checkpoints, and streaming — things you'd otherwise have to build from scratch.</div>
+        </div>
+        <div class="callout callout--accent" style="flex-direction: column; gap: var(--space-3);">
+          <div class="callout__title">CompositeBackend routing</div>
+          <div class="callout__content">Large tool outputs and conversation history are routed to temp directories so they don't pollute the user's working directory. The backend is composable — different paths go to different storage backends.</div>
+        </div>
+        <div class="callout callout--accent" style="flex-direction: column; gap: var(--space-3);">
+          <div class="callout__title">Skills as files on disk</div>
+          <div class="callout__content">Skills are Markdown files loaded at runtime, not hardcoded instructions. This means non-engineers can add skills by dropping a file in a directory — no code changes needed.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Final quiz -->
+    <div class="screen animate-in">
+      <h2 class="screen__title">Final check</h2>
+
+      <div class="quiz" id="quiz-module-7">
+        <div class="quiz__question">You want to add a feature where the AI automatically creates a summary of every conversation when you type <code>/save</code>. Which files would you likely need to touch?</div>
+        <div class="quiz__options">
+          <button class="quiz__option" data-answer="a" data-correct="true">command_registry.py (add the slash command) + agent.py (wire the handler via the summarization middleware)</button>
+          <button class="quiz__option" data-answer="b">app.py only — it handles all user input</button>
+          <button class="quiz__option" data-answer="c">config.py — that's where all settings live</button>
+        </div>
+        <div class="quiz__feedback quiz__feedback--correct" data-for="a">Right! You need to (1) declare the <code>/save</code> command in <code>command_registry.py</code> so it appears in autocomplete and the message queue knows how to route it, and (2) handle it in <code>agent.py</code> — likely by leveraging or extending the existing <code>SummarizationMiddleware</code>.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="b">app.py handles UI rendering and event routing, but command logic lives in the agent and registry layers.</div>
+        <div class="quiz__feedback quiz__feedback--incorrect" data-for="c">config.py is for settings, not feature logic. You want command_registry.py + agent.py.</div>
+      </div>
+
+      <div class="callout callout--success mt-8">
+        <span class="callout__icon">🎓</span>
+        <div class="callout__content">
+          <div class="callout__title">You've completed the course!</div>
+          You now understand the Deep Agents CLI architecture — the actors, the data flows, the clever patterns, and where to look when things go wrong. You can read the code, understand what happens when you run a command, and make more informed decisions about how to extend it. That's exactly the vocabulary and mental model you need to direct AI coding tools effectively.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- JAVASCRIPT -->
+<script>
+(function() {
+  'use strict';
+
+  // Tooltip system
+  var activeTooltip = null;
+  var tooltipEl = document.createElement('div');
+  tooltipEl.className = 'tooltip';
+  tooltipEl.id = 'glossary-tooltip';
+  document.body.appendChild(tooltipEl);
+
+  function showTooltip(termEl) {
+    var text = termEl.getAttribute('data-tip');
+    if (!text) return;
+    tooltipEl.textContent = text;
+    tooltipEl.classList.add('show');
+    positionTooltip(termEl);
+  }
+
+  function hideTooltip() {
+    tooltipEl.classList.remove('show');
+  }
+
+  function positionTooltip(termEl) {
+    var rect = termEl.getBoundingClientRect();
+    var tooltipRect = tooltipEl.getBoundingClientRect();
+    var top = rect.bottom + window.scrollY + 8;
+    var left = rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2);
+    left = Math.max(8, Math.min(left, window.innerWidth - tooltipRect.width - 8));
+    tooltipEl.style.top = top + 'px';
+    tooltipEl.style.left = left + 'px';
+  }
+
+  document.addEventListener('mouseover', function(e) {
+    if (e.target.classList.contains('term')) {
+      showTooltip(e.target);
+    }
+  });
+
+  document.addEventListener('mouseout', function(e) {
+    if (e.target.classList.contains('term')) {
+      hideTooltip();
+    }
+  });
+
+  document.addEventListener('touchstart', function(e) {
+    if (e.target.classList.contains('term')) {
+      if (activeTooltip === e.target) {
+        hideTooltip();
+        activeTooltip = null;
+      } else {
+        activeTooltip = e.target;
+        showTooltip(e.target);
+      }
+    } else {
+      if (activeTooltip) {
+        hideTooltip();
+        activeTooltip = null;
+      }
+    }
+  }, { passive: true });
+
+  // Quiz system
+  var quizContainers = document.querySelectorAll('.quiz');
+  quizContainers.forEach(function(quiz) {
+    var options = quiz.querySelectorAll('.quiz__option');
+    options.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (btn.classList.contains('disabled')) return;
+        var answer = btn.getAttribute('data-answer');
+        var isCorrect = btn.hasAttribute('data-correct');
+        options.forEach(function(o) { o.classList.add('disabled'); });
+        if (isCorrect) {
+          btn.classList.add('correct');
+        } else {
+          btn.classList.add('incorrect');
+          options.forEach(function(o) {
+            if (o.hasAttribute('data-correct')) o.classList.add('correct');
+          });
+        }
+        var feedbackEls = quiz.querySelectorAll('.quiz__feedback');
+        feedbackEls.forEach(function(fb) {
+          var forAnswer = fb.getAttribute('data-for');
+          if (isCorrect && forAnswer === answer) {
+            fb.classList.add('show');
+          } else if (!isCorrect && forAnswer === answer) {
+            fb.classList.add('show');
+          } else if (!isCorrect && forAnswer === 'a') {
+            // show correct answer feedback
+            var correctBtn = quiz.querySelector('[data-correct="true"]');
+            if (correctBtn) {
+              var correctAnswer = correctBtn.getAttribute('data-answer');
+              var correctFb = quiz.querySelector('[data-for="' + correctAnswer + '"]');
+              if (correctFb) correctFb.classList.add('show');
+            }
+          }
+        });
+      });
+    });
+  });
+
+  // Scroll animations (Intersection Observer)
+  var animateEls = document.querySelectorAll('.animate-in');
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    animateEls.forEach(function(el) { observer.observe(el); });
+  } else {
+    animateEls.forEach(function(el) { el.classList.add('visible'); });
+  }
+
+  // Navigation dots
+  var modules = document.querySelectorAll('.module');
+  var navDots = document.getElementById('navDots');
+  var navProgress = document.getElementById('navProgress');
+
+  modules.forEach(function(mod, i) {
+    var dot = document.createElement('button');
+    dot.className = 'nav-dot';
+    dot.setAttribute('aria-label', 'Module ' + (i + 1));
+    dot.addEventListener('click', function() {
+      mod.scrollIntoView({ behavior: 'smooth' });
+    });
+    navDots.appendChild(dot);
+  });
+
+  function updateNav() {
+    var scrollTop = window.scrollY;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    navProgress.style.width = progress + '%';
+
+    var dots = navDots.querySelectorAll('.nav-dot');
+    var closestIndex = 0;
+    var closestDist = Infinity;
+    modules.forEach(function(mod, i) {
+      var rect = mod.getBoundingClientRect();
+      var dist = Math.abs(rect.top - window.innerHeight / 2);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestIndex = i;
+      }
+    });
+    dots.forEach(function(dot, i) {
+      dot.classList.toggle('active', i === closestIndex);
+    });
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      var currentIndex = 0;
+      modules.forEach(function(mod, i) {
+        var rect = mod.getBoundingClientRect();
+        if (rect.top <= window.innerHeight / 2) currentIndex = i;
+      });
+      if (currentIndex < modules.length - 1) {
+        modules[currentIndex + 1].scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      var currentIndex2 = 0;
+      modules.forEach(function(mod, i) {
+        var rect = mod.getBoundingClientRect();
+        if (rect.top <= window.innerHeight / 2) currentIndex2 = i;
+      });
+      if (currentIndex2 > 0) {
+        modules[currentIndex2 - 1].scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  });
+
+  // Staggered animations
+  var staggeredContainers = document.querySelectorAll('.animate-in');
+  staggeredContainers.forEach(function(el, i) {
+    el.style.transitionDelay = (i % 6) * 120 + 'ms';
+  });
+
+})();
+</script>
+
+</body>
+</html>
