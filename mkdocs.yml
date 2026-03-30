@@ -1,0 +1,202 @@
+# MkDocs Configuration for Deep Agents Documentation
+
+site_name: Deep Agents CLI Build Course
+site_description: Build a production-quality AI coding CLI from scratch with this comprehensive 18-module course.
+site_author: Deep Agents Team
+site_url: https://docs.langchain.com/oss/python/deepagents/cli-build-course
+
+repo_name: langchain-ai/deepagents
+repo_url: https://github.com/langchain-ai/deepagents
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep orange
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep orange
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search:
+      lang:
+        - en
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.mark
+  - attr_list
+  - md_in_html
+  - tables
+
+nav:
+  - Home: index.md
+  - "Course Overview":
+      - About: course/index.md
+      - Prerequisites: course/prerequisites.md
+      - Quick Start: course/quickstart.md
+  - "Module 1: Project Setup":
+      - deepagents-cli-build-course/module-01-project-setup/README.md
+      - Architecture: deepagents-cli-build-course/module-01-project-setup/section-01-architecture.md
+      - Initialize: deepagents-cli-build-course/module-01-project-setup/section-02-initialize-project.md
+      - Dependencies: deepagents-cli-build-course/module-01-project-setup/section-03-dependencies.md
+      - Entry Point: deepagents-cli-build-course/module-01-project-setup/section-04-entry-point.md
+      - Quiz: deepagents-cli-build-course/module-01-project-setup/quiz.md
+  - "Module 2: REPL & Streaming":
+      - deepagents-cli-build-course/module-02-repl-streaming/README.md
+      - "What is Streaming": deepagents-cli-build-course/module-02-repl-streaming/section-01-what-is-streaming.md
+      - "Build REPL": deepagents-cli-build-course/module-02-repl-streaming/section-02-build-repl-skeleton.md
+      - "Connect LLM": deepagents-cli-build-course/module-02-repl-streaming/section-03-connect-llm.md
+      - "Add Streaming": deepagents-cli-build-course/module-02-repl-streaming/section-04-add-streaming.md
+      - Quiz: deepagents-cli-build-course/module-02-repl-streaming/quiz.md
+  - "Module 3: Tool System":
+      - deepagents-cli-build-course/module-03-tool-system/README.md
+      - "What is a Tool": deepagents-cli-build-course/module-03-tool-system/section-01-what-is-tool.md
+      - ReadFileTool: deepagents-cli-build-course/module-03-tool-system/section-02-build-read-tool.md
+      - WriteFileTool: deepagents-cli-build-course/module-03-tool-system/section-03-build-write-tool.md
+      - ExecuteTool: deepagents-cli-build-course/module-03-tool-system/section-04-build-execute-tool.md
+      - "Wire Tools": deepagents-cli-build-course/module-03-tool-system/section-05-wire-tools.md
+      - Quiz: deepagents-cli-build-course/module-03-tool-system/quiz.md
+  - "Module 4: Agent Architecture":
+      - deepagents-cli-build-course/module-04-agent-architecture/README.md
+      - "LangGraph Intro": deepagents-cli-build-course/module-04-agent-architecture/section-01-what-is-langgraph.md
+      - "Define State": deepagents-cli-build-course/module-04-agent-architecture/section-02-define-state.md
+      - "Tool Node": deepagents-cli-build-course/module-04-agent-architecture/section-03-build-tool-node.md
+      - "Model Node": deepagents-cli-build-course/module-04-agent-architecture/section-04-build-model-node.md
+      - "Create Graph": deepagents-cli-build-course/module-04-agent-architecture/section-05-create-graph.md
+      - Quiz: deepagents-cli-build-course/module-04-agent-architecture/quiz.md
+  - "Module 5: Middleware Pipeline":
+      - deepagents-cli-build-course/module-05-middleware-pipeline/README.md
+      - "What is Middleware": deepagents-cli-build-course/module-05-middleware-pipeline/section-01-what-is-middleware.md
+      - "Build Base Class": deepagents-cli-build-course/module-05-middleware-pipeline/section-02-build-base-class.md
+      - "Implement wrap_model_call": deepagents-cli-build-course/module-05-middleware-pipeline/section-03-implement-wrap.md
+      - "Compose Middleware": deepagents-cli-build-course/module-05-middleware-pipeline/section-04-compose-middleware.md
+      - Quiz: deepagents-cli-build-course/module-05-middleware-pipeline/quiz.md
+  - "Module 6: Filesystem Tools":
+      - deepagents-cli-build-course/module-06-filesystem-tools/README.md
+      - "ls Tool": deepagents-cli-build-course/module-06-filesystem-tools/section-01-ls-tool.md
+      - read_file: deepagents-cli-build-course/module-06-filesystem-tools/section-02-read-file.md
+      - write_file: deepagents-cli-build-course/module-06-filesystem-tools/section-03-write-file.md
+      - edit_file: deepagents-cli-build-course/module-06-filesystem-tools/section-04-edit-file.md
+      - glob: deepagents-cli-build-course/module-06-filesystem-tools/section-05-glob-tool.md
+      - grep: deepagents-cli-build-course/module-06-filesystem-tools/section-06-grep-tool.md
+      - Quiz: deepagents-cli-build-course/module-06-filesystem-tools/quiz.md
+  - "Module 7: Shell Execution":
+      - deepagents-cli-build-course/module-07-shell-execution/README.md
+      - subprocess: deepagents-cli-build-course/module-07-shell-execution/section-01-subprocess-deep-dive.md
+      - "Execute Tool": deepagents-cli-build-course/module-07-shell-execution/section-02-execute-tool.md
+      - Allowlisting: deepagents-cli-build-course/module-07-shell-execution/section-03-command-allowlisting.md
+      - Timeouts: deepagents-cli-build-course/module-07-shell-execution/section-04-timeout-handling.md
+      - "Output Capture": deepagents-cli-build-course/module-07-shell-execution/section-05-output-capture.md
+      - Quiz: deepagents-cli-build-course/module-07-shell-execution/quiz.md
+  - "Module 8: Human-in-the-Loop":
+      - deepagents-cli-build-course/module-08-human-in-the-loop/README.md
+      - "Why HITL": deepagents-cli-build-course/module-08-human-in-the-loop/section-01-why-hitl.md
+      - "Interrupt System": deepagents-cli-build-course/module-08-human-in-the-loop/section-02-interrupt-system.md
+      - "Approval Prompts": deepagents-cli-build-course/module-08-human-in-the-loop/section-03-approval-prompts.md
+      - interrupt_on: deepagents-cli-build-course/module-08-human-in-the-loop/section-04-interrupt-on-config.md
+      - auto-approve: deepagents-cli-build-course/module-08-human-in-the-loop/section-05-auto-approve.md
+      - Quiz: deepagents-cli-build-course/module-08-human-in-the-loop/quiz.md
+  - "Module 9: Session & History":
+      - deepagents-cli-build-course/module-09-session-history/README.md
+      - "Stateless vs Stateful": deepagents-cli-build-course/module-09-session-history/section-01-stateless-vs-stateful.md
+      - "Thread ID": deepagents-cli-build-course/module-09-session-history/section-02-generate-thread-id.md
+      - SQLite: deepagents-cli-build-course/module-09-session-history/section-03-sqlite-persistence.md
+      - "Prepend History": deepagents-cli-build-course/module-09-session-history/section-04-prepend-history.md
+      - Checkpointing: deepagents-cli-build-course/module-09-session-history/section-05-checkpointing.md
+      - Quiz: deepagents-cli-build-course/module-09-session-history/quiz.md
+  - "Module 10: Skills System":
+      - deepagents-cli-build-course/module-10-skills-system/README.md
+      - "What is a Skill": deepagents-cli-build-course/module-10-skills-system/section-01-what-is-skill.md
+      - "Directory Scanner": deepagents-cli-build-course/module-10-skills-system/section-02-skills-directory-scanner.md
+      - SkillsMiddleware: deepagents-cli-build-course/module-10-skills-system/section-03-skills-middleware.md
+      - "Load into Prompt": deepagents-cli-build-course/module-10-skills-system/section-04-load-into-prompt.md
+      - "Skill Precedence": deepagents-cli-build-course/module-10-skills-system/section-05-skill-precedence.md
+      - Quiz: deepagents-cli-build-course/module-10-skills-system/quiz.md
+  - "Module 11: Memory System":
+      - deepagents-cli-build-course/module-11-memory-system/README.md
+      - "What is Memory": deepagents-cli-build-course/module-11-memory-system/section-01-what-is-memory.md
+      - FilesystemBackend: deepagents-cli-build-course/module-11-memory-system/section-02-filesystem-backend.md
+      - MemoryMiddleware: deepagents-cli-build-course/module-11-memory-system/section-03-memory-middleware.md
+      - "Load AGENTS.md": deepagents-cli-build-course/module-11-memory-system/section-04-load-agents-md.md
+      - "Context Injection": deepagents-cli-build-course/module-11-memory-system/section-05-context-injection.md
+      - Quiz: deepagents-cli-build-course/module-11-memory-system/quiz.md
+  - "Module 12: Backend Abstraction":
+      - deepagents-cli-build-course/module-12-backend-abstraction/README.md
+      - "Why Abstraction": deepagents-cli-build-course/module-12-backend-abstraction/section-01-why-abstraction.md
+      - "Backend Protocol": deepagents-cli-build-course/module-12-backend-abstraction/section-02-backend-protocol.md
+      - LocalBackend: deepagents-cli-build-course/module-12-backend-abstraction/section-03-local-shell-backend.md
+      - CompositeBackend: deepagents-cli-build-course/module-12-backend-abstraction/section-04-composite-backend.md
+      - "Backend Factory": deepagents-cli-build-course/module-12-backend-abstraction/section-05-backend-factory.md
+      - Quiz: deepagents-cli-build-course/module-12-backend-abstraction/quiz.md
+  - "Module 13: MCP Integration":
+      - deepagents-cli-build-course/module-13-mcp-integration/README.md
+      - "What is MCP": deepagents-cli-build-course/module-13-mcp-integration/section-01-what-is-mcp.md
+      - "MCP Client": deepagents-cli-build-course/module-13-mcp-integration/section-02-mcp-client-architecture.md
+      - "Discover mcp.json": deepagents-cli-build-course/module-13-mcp-integration/section-03-discover-mcp-json.md
+      - "Spawn Servers": deepagents-cli-build-course/module-13-mcp-integration/section-04-spawn-mcp-servers.md
+      - "Connect Tools": deepagents-cli-build-course/module-13-mcp-integration/section-05-connect-tools.md
+      - Quiz: deepagents-cli-build-course/module-13-mcp-integration/quiz.md
+  - "Module 14: Subagents":
+      - deepagents-cli-build-course/module-14-subagents/README.md
+      - "Why Subagents": deepagents-cli-build-course/module-14-subagents/section-01-why-subagents.md
+      - SubAgentSpec: deepagents-cli-build-course/module-14-subagents/section-02-subagent-spec.md
+      - SubAgentMiddleware: deepagents-cli-build-course/module-14-subagents/section-03-subagent-middleware.md
+      - task Tool: deepagents-cli-build-course/module-14-subagents/section-04-task-tool.md
+      - "Async Subagents": deepagents-cli-build-course/module-14-subagents/section-05-async-subagents.md
+      - Quiz: deepagents-cli-build-course/module-14-subagents/quiz.md
+  - "Module 15: Remote Sandboxes":
+      - deepagents-cli-build-course/module-15-remote-sandboxes/README.md
+      - "Local vs Remote": deepagents-cli-build-course/module-15-remote-sandboxes/section-01-local-vs-remote.md
+      - "Sandbox Interface": deepagents-cli-build-course/module-15-remote-sandboxes/section-02-sandbox-interface.md
+      - LangSmith: deepagents-cli-build-course/module-15-remote-sandboxes/section-03-langsmith-sandbox.md
+      - Daytona: deepagents-cli-build-course/module-15-remote-sandboxes/section-04-daytona-integration.md
+      - Modal: deepagents-cli-build-course/module-15-remote-sandboxes/section-05-modal-integration.md
+      - Quiz: deepagents-cli-build-course/module-15-remote-sandboxes/quiz.md
+  - "Module 16: Textual TUI":
+      - deepagents-cli-build-course/module-16-textual-tui/README.md
+      - "Why Textual": deepagents-cli-build-course/module-16-textual-tui/section-01-why-textual.md
+      - "App Structure": deepagents-cli-build-course/module-16-textual-tui/section-02-app-structure.md
+      - "Build Widgets": deepagents-cli-build-course/module-16-textual-tui/section-03-build-widgets.md
+      - "CSS Styling": deepagents-cli-build-course/module-16-textual-tui/section-04-css-styling.md
+      - "Message Handling": deepagents-cli-build-course/module-16-textual-tui/section-05-message-handling.md
+      - Workers: deepagents-cli-build-course/module-16-textual-tui/section-06-workers-async.md
+      - Quiz: deepagents-cli-build-course/module-16-textual-tui/quiz.md
+  - "Module 17: Slash Commands":
+      - deepagents-cli-build-course/module-17-slash-commands/README.md
+      - "What are Slash Commands": deepagents-cli-build-course/module-17-slash-commands/section-01-what-are-slash-commands.md
+      - SlashCommand Dataclass: deepagents-cli-build-course/module-17-slash-commands/section-02-slashcommand-dataclass.md
+      - "Command Registry": deepagents-cli-build-course/module-17-slash-commands/section-03-command-registry.md
+      - "Bypass Tiers": deepagents-cli-build-course/module-17-slash-commands/section-04-bypass-tiers.md
+      - "Implement Commands": deepagents-cli-build-course/module-17-slash-commands/section-05-implement-commands.md
+      - Quiz: deepagents-cli-build-course/module-17-slash-commands/quiz.md
+  - "Module 18: Polish & Production":
+      - deepagents-cli-build-course/module-18-polish-production/README.md
+      - "Error Handling": deepagents-cli-build-course/module-18-polish-production/section-01-error-handling.md
+      - Logging: deepagents-cli-build-course/module-18-polish-production/section-02-logging-debugging.md
+      - "Unit Tests": deepagents-cli-build-course/module-18-polish-production/section-03-unit-tests.md
+      - "Integration Tests": deepagents-cli-build-course/module-18-polish-production/section-04-integration-tests.md
+      - Packaging: deepagents-cli-build-course/module-18-polish-production/section-05-packaging.md
+      - CI/CD: deepagents-cli-build-course/module-18-polish-production/section-06-cicd-setup.md
+      - Quiz: deepagents-cli-build-course/module-18-polish-production/quiz.md
